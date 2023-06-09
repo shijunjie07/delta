@@ -98,11 +98,9 @@ class databaseUpdate(Utils, DB):
             self.logger.info('-----------------------------------')
             self.logger.info('update {}'.format(ticker))
             
-            # check if ticker tables exists
-            # if yes proceedß
-            # else crt tables and request all data from api
-            self.is_tkl_tables_exist(ticker)
-            
+            # check table exists, if not create tables
+            is_table_exists = self.is_tkl_tables_exist(ticker)
+
             # pull dates & tss from db
             
             # check missing

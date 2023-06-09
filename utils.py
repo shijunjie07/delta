@@ -1,4 +1,8 @@
-
+# ---------------------------------
+# Utils
+# @author: Shi Junjie
+# Fri 9 Jun 2023
+# ---------------------------------
 
 import os
 import re
@@ -22,6 +26,7 @@ class Utils:
     
     def __init__(self):
         ...
+        
     def dt_obj_2_str(self, dates:list) -> list[str]:
         """convert the list of input into string with format "%Y-%m-%d"
 
