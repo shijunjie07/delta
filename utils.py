@@ -9,23 +9,19 @@ import pandas as pd
 import datetime as dt
 
 
-est = pytz.timezone("America/New_York")
-
-numpy_int_types = [
+est = pytz.timezone("America/New_York") # Eastern time
+numpy_num_types = [
     np.int8, np.uint8, np.int16, np.uint16,
     np.int32, np.uint32, np.int64, np.uint64,
-]
-
-numpy_float_types = [
     np.float16,
     np.float32, np.float64,
 ]
+
 
 class Utils:
     
     def __init__(self):
         ...
-
     def dt_obj_2_str(self, dates:list) -> list[str]:
         """convert the list of input into string with format "%Y-%m-%d"
 
@@ -44,7 +40,6 @@ class Utils:
             float,
         ]
         desire_fmt = '%Y-%m-%d'
-        
         # check numpy types
         dates = [self._convert_numpy_types(d) for d in dates]
         dates_desire_fmt = []
@@ -95,32 +90,9 @@ class Utils:
         Returns:
             _type_: float or int or its original form
         """
-        # check float
-        for i in range(len(numpy_float_types)):
-            if (isinstance(input_data, numpy_float_types[i])):
-                return float(input_data)
-        # check int
-        for j in range(len(numpy_int_types)):
-            if (isinstance(input_data, numpy_int_types[j])):
+        # check types
+        for i in range(len(numpy_num_types)):
+            if (isinstance(input_data, numpy_num_types[i])):
                 return float(input_data)
         # if not numpy number types then return itself
         return input_data
-
-# Utils.is_tkl_tables_exist('abc', os.viron["DB_PATH"])
-
-
-dt_dt = [
-    dt.datetime(2023, 1, 2, 3, 4, 13, 12).date(),
-    dt.datetime(2023, 1, 2, 3, 4, 13, 12),
-    dt.date.today(),
-    dt.datetime(2023, 1, 2, 3, 4, 13, 12).timestamp(),
-    dt.datetime(2023, 1, 2, 3, 4, 13, 12),
-    # np.array([33]),
-    1678924238,
-    1673621057.235,
-    np.float64(1655537841),
-    np.int64(1662311855),
-]
-print([(x, type(x)) for x in dt_dt], end='\n--------------------------\n')
-dt_ = Utils().dt_obj_2_str(dt_dt)
-print([(x, type(x)) for x in dt_])
