@@ -13,6 +13,7 @@ import numpy as npß
 import pandas as pd
 import datetime as dt
 from tqdm import tqdm
+from eod import EodHistoricalData
 import pandas_market_calendars as mcal
 
 # local packages
@@ -57,7 +58,9 @@ class databaseUpdate(Utils, DB):
         ]
         self.exchanges = ['us']     # exchange codes
         self.tickers = self.get_mrkcap_tkls()   # tickers to update
-
+        
+        self.api_client = EodHistoricalData(api_key=self.API_KEY)   # init api client
+        
     # main func
     def update(self, start_date:str, end_date:str):
         """_summary_
@@ -119,6 +122,7 @@ class databaseUpdate(Utils, DB):
             self.logger.info('missing dts: {}(date) {}(tss)'.format(len(missing_trading_dates), len(missing_timestamps)))
             
             # request from api
+            self.api_client.get_prices_eod()
             
             # push eod & intra
             
