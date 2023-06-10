@@ -7,9 +7,9 @@ import datetime as dt
 
 class DB:
     
-    def __init__(self, logger:logging.Logger):
+    def __init__(self, logger:logging.Logger, DB_PATH:str):
         self.logger = logger
-        self.DB_PATH = os.environ['DB_PATH']
+        self.DB_PATH = DB_PATH
         self.con = sqlite3.connect(self.DB_PATH, check_same_thread=False)
         self.cur = self.con.cursor()
         
@@ -101,3 +101,36 @@ class DB:
         rows = self.cur.fetchall()
         return [x[0] for x in rows]
     
+    def pull_tkl_dts(self, ticker:str) -> list[list]:
+        """pull existing dates and timestamps from database
+
+        Args:
+            ticker (str): _description_
+
+        Returns:
+            list[list]: _description_
+        """
+
+        dt_obj_index = 0
+        
+        # queries
+        eod_query = 'select date_day from {}_eod where date_day >'.format(ticker)
+        intra_query = 'select date_time from {}_intra'.format(ticker)
+        
+        # pull from database
+        raw_eod = self.con.execute(eod_query).fetchall()    # eod date "%Y%m%d"
+        raw_intra = self.con.execute(intra_query).fetchall() # intra datetime unix timestamp
+        
+        # extract dates
+        if (raw_eod):
+            dates = [x[dt_obj_index] for x in raw_eod]
+        else:
+            dates = []
+        
+        # extract timestamps
+        if (raw_intra):
+            timestamps = [x[dt_obj_index] for x in raw_intra]
+        else:
+            timestamps = []
+
+        return [dates, timestamps]

@@ -163,3 +163,4 @@ cython_debug/
 environment.yml
 .vscode/
 .DS_Store
+.conda/
