@@ -16,17 +16,13 @@ class DB:
         self.table_names = self._table_names()
         self.table_types = ['eod', 'intra']
 
-    def get_mrkcap_tkls(self):
+    def get_mrkcap_tkls(self, ticker_path:str, market_caps:list[str]):
         """
         :return: a list of tickers
         """
         tickers = []
-        for cap in self.market_caps:
-            for ex in self.exchanges:
-                if (ex == "us"):
-                    tickers.extend(list(pd.read_csv(f"{self.TICKER_PATH}{cap}.csv")["Symbol"]))
-                elif (ex == "nyse"):
-                    tickers.extend(list(pd.read_csv(f"{self.TICKER_PATH}{cap}-nyse.csv")["Symbol"]))
+        for cap in market_caps:
+                    tickers.extend(list(pd.read_csv(f"{ticker_path}{cap}.csv")["Symbol"]))
         return [tkl.replace(" ", "") for tkl in tickers if (isinstance(tkl, str))]
 
     def is_tkl_tables_exist(self, ticker:str) -> bool:
@@ -101,21 +97,32 @@ class DB:
         rows = self.cur.fetchall()
         return [x[0] for x in rows]
     
-    def pull_tkl_dts(self, ticker:str) -> list[list]:
+    def pull_tkl_dts(
+        self, ticker:str, start_date:str,
+        end_date:str, start_ts:int, end_ts:int
+    ) -> tuple[list]:
         """pull existing dates and timestamps from database
 
         Args:
             ticker (str): _description_
+            start_date (str): _description_
+            end_date (str): _description_
+            start_ts (int): _description_
+            end_ts (int): _description_
 
         Returns:
-            list[list]: _description_
+            tuple[list]: _description_
         """
 
         dt_obj_index = 0
         
         # queries
-        eod_query = 'select date_day from {}_eod where date_day >'.format(ticker)
-        intra_query = 'select date_time from {}_intra'.format(ticker)
+        eod_query = 'SELECT date_day FROM {}_eod WHERE date_day>={} AND date_day<={};'.format(
+            ticker, start_date.replace('-', ''), end_date.replace('-', '')
+        )
+        intra_query = 'SELECT date_time FROM {}_intra WHERE date_time>={} AND date_time<={};'.format(
+            ticker, start_ts, end_ts
+        )
         
         # pull from database
         raw_eod = self.con.execute(eod_query).fetchall()    # eod date "%Y%m%d"
@@ -123,7 +130,11 @@ class DB:
         
         # extract dates
         if (raw_eod):
-            dates = [x[dt_obj_index] for x in raw_eod]
+            dates = [str(x[dt_obj_index]) for x in raw_eod]
+            dates = [
+                '{}-{}-{}'.format(x[:4], x[:6], x[6:])
+                for x in dates
+            ]
         else:
             dates = []
         
@@ -133,4 +144,4 @@ class DB:
         else:
             timestamps = []
 
-        return [dates, timestamps]
+        return dates, timestamps

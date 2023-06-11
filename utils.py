@@ -166,24 +166,81 @@ class Utils:
         
         return missing_dates, missing_timestamps
         
-        
-    
-    
-    # def convert_unix(start_time:str, end_time:str):
-        
-    #     # print(start_time)
-    #     local_time = pytz.timezone("America/New_York")
-    #     from_temp = start_time
-    #     naive_0_from_temp = dt.datetime.strptime(from_temp, "%Y-%m-%d %H:%M:%S")
-    #     local_0_from_temp = local_time.localize(naive_0_from_temp, is_dst=None)
-    #     utc_0_from_temp = local_0_from_temp.astimezone(pytz.utc).timestamp()
-    #     start_timestamp = int(utc_0_from_temp)
+    def timestamp_periods(
+        self, max_days_period:int, start_date:str,
+        end_date:str,
+    ) -> list[list]:
+        """_summary_
 
-    #     to_temp = end_time
-    #     naive_1_to_temp = dt.datetime.strptime(to_temp, "%Y-%m-%d %H:%M:%S")
-    #     local_1_to_temp = local_time.localize(naive_1_to_temp, is_dst=None)
-    #     utc_1_to_temp = local_1_to_temp.astimezone(pytz.utc).timestamp()
-    #     end_timestamp = int(utc_1_to_temp)
+        Args:
+            max_days_period (int): _description_
+            start_date (str): _description_
+            end_date (str): _description_
+
+        Returns:
+            list[list]: _description_
+        """
+        i = 0
+        is_last_period = False
+        last_end_dt_obj = dt.datetime
+        timestamps_periods = []
         
-    #     return [start_timestamp, end_timestamp]
-    
+        
+        # construct dt obj and check input timedelta
+        start_dt_obj = dt.datetime.strptime(start_date, self.desire_fmt)
+        end_dt_obj = dt.datetime.strptime(end_date, self.desire_fmt)
+        start_end_days = (end_dt_obj - start_dt_obj).days      # days between start and end
+
+        # check if exceed maximum period per api intra request
+        if (start_end_days > max_days_period):
+            # iter
+            while(not is_last_period):
+                if (i == 0):
+                    current_dt_obj = start_dt_obj
+                else:
+                    current_dt_obj = last_end_dt_obj + dt.timedelta(days=1)
+                future_dt_obj = current_dt_obj + dt.timedelta(days=max_days_period)
+                future_end_days_perd = (future_dt_obj - end_dt_obj).days
+                
+                if (future_end_days_perd > 0):     # period future exceeds end date
+                    timestamps_periods.append(
+                        self._construct_trading_period_timestamps(
+                            current_dt_obj.strftime(self.desire_fmt), end_date
+                        )
+                    )
+                    is_last_period = True
+                else:       # not exceed next iteration
+                    timestamps_periods.append(
+                        self._construct_trading_period_timestamps(
+                            current_dt_obj.strftime(self.desire_fmt),
+                            future_dt_obj.strftime(self.desire_fmt)
+                        )
+                    )
+                    last_end_dt_obj = future_dt_obj
+
+                i += 1    # increment by 1
+            # return
+            return timestamps_periods 
+            
+        else:
+            return [self._construct_trading_period_timestamps(start_date, end_date)]
+
+    def _construct_trading_period_timestamps(
+        self, start_date:str, end_date:str,
+    ) -> tuple[int]:
+        """construct start and end timestamps for the traing period
+
+        Args:
+            start_date (str): _description_
+            end_date (str): _description_
+
+        Returns:
+            tuple[int]: _description_
+        """
+        return [
+            int(pd.Timestamp("{} 04:00:00".format(start_date), tz=est).timestamp()),    # pre-market
+            int(pd.Timestamp("{} 20:00:00".format(end_date), tz=est).timestamp())       # after-hour
+        ]
+        
+        
+        

@@ -19,18 +19,21 @@ import pandas_market_calendars as mcal
 # local packages
 from delta.utils import Utils
 from delta.db import DB
+from delta.eod_api_request_handler import eodApiRequestHandler
+
 
 
 # Configure the logger
 date_now = dt.datetime.now().strftime("%Y-%m-%d_%H-%M")
+logger_file_path = '{}/deltaLog_{}.log'.format(os.environ['LOG_PATH'], date_now)
 logger = logging.basicConfig(
-    filename='{}/deltaLog_{}.log'.format(os.environ['LOG_PATH'], date_now),
+    filename=logger_file_path,
     level=logging.INFO, format='%(asctime)s:%(levelname)s: | %(message)s'
 )
 logger = logging.getLogger(__name__)
 
 
-class databaseUpdate(Utils, DB):
+class databaseUpdate(Utils, DB, eodApiRequestHandler):
     """_summary_
     """
     
@@ -47,6 +50,7 @@ class databaseUpdate(Utils, DB):
         # init classes
         Utils.__init__(self, self.logger)
         DB.__init__(self, self.logger, self.DB_PATH)
+        eodApiRequestHandler.__init__(self, self.API_KEY)
         
         self.market_caps = [        # market caps to pull tickers
             'nano',
@@ -56,11 +60,12 @@ class databaseUpdate(Utils, DB):
             'large',
             'mega',
         ]
-        self.exchanges = ['us']     # exchange codes
-        self.tickers = self.get_mrkcap_tkls()   # tickers to update
+        self.exchange = 'us'     # exchange code
+        self.tickers = self.get_mrkcap_tkls(self.TICKER_PATH, self.market_caps)   # tickers to update
         
-        self.api_client = EodHistoricalData(api_key=self.API_KEY)   # init api client
-        
+        self.http_error_tkls = []       # list of tickers encountered http error
+        self.max_days = 118     # maximum periods between ‘from’ and ‘to’ for 1 minute intra data
+
     # main func
     def update(self, start_date:str, end_date:str):
         """_summary_
@@ -91,13 +96,14 @@ class databaseUpdate(Utils, DB):
             -> program starts at {} <-
             """.format(
                     start_date, end_date, len(trading_dates), len(trading_timestamps),
-                    len(self.tickers), ', '.join(self.market_caps), ', '.join(self.exchanges),
+                    len(self.tickers), ', '.join(self.market_caps), ', '.join(self.exchange),
                     self.DB_PATH, self.API_KEY, self.LOG_PATH, self.TICKER_PATH, self.NO_DATA_DB_PATH,
                     dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 )
         
         print(init_string)
         self.logger.info('\n{}'.format(init_string))
+        
 
         # iter
         iter_obj = tqdm(range(len(self.tickers)))
@@ -111,7 +117,10 @@ class databaseUpdate(Utils, DB):
             is_table_exists = self.is_tkl_tables_exist(ticker)
 
             # pull dates & tss from db
-            exist_dates, exist_timestamps = self.pull_tkl_dts(ticker)
+            exist_dates, exist_timestamps = self.pull_tkl_dts(
+                ticker, start_date, end_date,
+                trading_timestamps[0], trading_timestamps[-1],
+            )
             self.logger.info('existing dts: {}(date) {}(tss)'.format(len(exist_dates), len(exist_timestamps)))
 
             # check missing
@@ -121,9 +130,37 @@ class databaseUpdate(Utils, DB):
             )
             self.logger.info('missing dts: {}(date) {}(tss)'.format(len(missing_trading_dates), len(missing_timestamps)))
             
-            # request from api
-            self.api_client.get_prices_eod()
+            # request eod from api
+            is_success_eod_request, eod_json = self.request_eod(
+                ticker, self.exchange, start_date,
+                end_date
+            )
+            # check if resp valid
+            if (is_success_eod_request):
+                self.logger.info('eod request success: {}; length of data: {}'.format(
+                    is_success_eod_request, len(eod_json),
+                ))
+            else:
+                self.logger.info('eod request success: {}; \'{}\''.format(
+                    is_success_eod_request, eod_json,
+                ))
+                self.http_error_tkls.append(ticker) # error, save for later action
+                continue
             
+            # request intra from api
+            
+            # construct timestamps for periods within request start and end date
+            timestamp_periods = self.timestamp_periods(
+                max_days_period=self.max_days, start_date=start_date, end_date=end_date,
+            )
+                # is_success_intra_request, intra_json = self.request_intra(
+                    
+                # )
+            # exit()
+
+
+            
+                        
             # push eod & intra
             
             # pull dates & tss from db
@@ -136,4 +173,4 @@ class databaseUpdate(Utils, DB):
             exit()
         
         
-databaseUpdate(logger).update('2021-01-01', '2021-02-02')
+databaseUpdate(logger).update('2021-01-01', '2023-02-02')
