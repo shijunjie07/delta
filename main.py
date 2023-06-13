@@ -134,59 +134,81 @@ class databaseUpdate(Utils, DB, eodApiRequestHandler):
                 comparant_dates=exist_dates, comparant_timestamps=exist_timestamps
             )
             self.logger.info('missing dts: {}(date) {}(tss)'.format(len(missing_trading_dates), len(missing_timestamps)))
-            
-            # request eod from api
-            is_success_eod_request, eod_json = self.request_eod(
-                ticker, self.exchange, start_date,
-                end_date
-            )
-            # check if resp valid
-            if (is_success_eod_request):
-                self.logger.info('eod request success: {}; length of data: {}'.format(
-                    is_success_eod_request, len(eod_json),
-                ))
-            else:
-                self.logger.info('eod request success: {}; \'{}\''.format(
-                    is_success_eod_request, eod_json,
-                ))
-                self.http_error_tkls.append(ticker) # error, save for later action
+            # continue if no missing dts
+            if ((not missing_trading_dates) and (not missing_timestamps)):
+                self.logger.info('no missing dts; moving to next ticker')
                 continue
             
-            # request intra from api
-            # construct timestamps for periods within request start and end date
-            intra_json = []
-            timestamp_periods = self.timestamp_periods(
-                max_days_period=self.max_days, start_date=start_date, end_date=end_date,
-            )
-            is_intra_error_breaks = False
-            for start_ts, end_ts in timestamp_periods:
-                # request intra from api
-                is_success_intra_request, intra_json_perd = self.request_intra(
-                    ticker, self.exchange, start_ts,
-                    end_ts
+            # if missing dates
+            if (missing_trading_dates):
+                # request eod from api
+                is_success_eod_request, eod_json = self.request_eod(
+                    ticker, self.exchange, start_date,
+                    end_date
                 )
                 # check if resp valid
-                if (is_success_intra_request):
-                    self.logger.info('intra request success ({} - {}): {}; length of data: {}'.format(
-                        start_ts, end_ts,
-                        is_success_intra_request, len(intra_json_perd),
+                if (is_success_eod_request):
+                    self.logger.info('eod request success: {}; length of data: {}'.format(
+                        is_success_eod_request, len(eod_json),
                     ))
-                    # extend intra_json
-                    intra_json.extend(intra_json_perd)
                 else:
-                    self.logger.info('intra request success ({} - {}): {}; \'{}\''.format(
-                        start_ts, end_ts,
-                        is_success_intra_request, intra_json_perd,
+                    self.logger.info('eod request success: {}; \'{}\''.format(
+                        is_success_eod_request, eod_json,
                     ))
                     self.http_error_tkls.append(ticker) # error, save for later action
-                    is_intra_error_breaks = True
-                    break
-            # check intra http error
-            if (is_intra_error_breaks):
-                intra_json = []
-                continue
-                        
+                    continue
+            
+            # if missing timestamps
+            if (missing_timestamps):
+                # request intra from api
+                intra_json
+                # construct timestamps for periods within request start and end date
+                timestamp_periods = self.timestamp_periods(
+                    max_days_period=self.max_days, start_date=start_date, end_date=end_date,
+                )
+                is_intra_error_breaks = False
+                for start_ts, end_ts in timestamp_periods:
+                    # request intra from api
+                    is_success_intra_request, intra_json_perd = self.request_intra(
+                        ticker, self.exchange, start_ts,
+                        end_ts
+                    )
+                    # check if resp valid
+                    if (is_success_intra_request):
+                        self.logger.info('intra request success ({} - {}): {}; length of data: {}'.format(
+                            start_ts, end_ts,
+                            is_success_intra_request, len(intra_json_perd),
+                        ))
+                        # extend intra_json
+                        intra_json.extend(intra_json_perd)
+                    else:
+                        self.logger.info('intra request success ({} - {}): {}; \'{}\''.format(
+                            start_ts, end_ts,
+                            is_success_intra_request, intra_json_perd,
+                        ))
+                        self.http_error_tkls.append(ticker) # error, save for later action
+                        is_intra_error_breaks = True
+                        break
+                # check intra http error
+                if (is_intra_error_breaks):
+                    intra_json = []
+                    continue
+            
+            # construct df for eod and intra
+            df_eod = pd.DataFrame(eod_json)
+            df_intra = pd.DataFrame(intra_json)
+            
+            # filter out non missing data
+            df_eod = df_eod[df_eod['date'] == missing_trading_dates].drop(
+                columns=['adjusted_close'], axis=1,
+            )
+            df_intra = df_intra[df_intra['timestamp'] == missing_trading_dates].drop(
+                columns=['gmtoffset', 'datetime'], axis=1,
+            )
+            
             # push eod & intra
+            eod_push_status = self.push_eod(ticker, df_eod)
+            intra_push_status = self.push_intra(ticker, df_intra)
             
             # pull dates & tss from db
             
@@ -195,7 +217,7 @@ class databaseUpdate(Utils, DB, eodApiRequestHandler):
             # push to NODATADB
             
             # move to next ticker
-            exit()
+            # exit()
         
         
 databaseUpdate(logger).update('2021-01-01', '2023-02-02')

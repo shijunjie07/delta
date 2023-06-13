@@ -185,7 +185,6 @@ class Utils:
         last_end_dt_obj = dt.datetime
         timestamps_periods = []
         
-        
         # construct dt obj and check input timedelta
         start_dt_obj = dt.datetime.strptime(start_date, self.desire_fmt)
         end_dt_obj = dt.datetime.strptime(end_date, self.desire_fmt)
@@ -241,6 +240,3 @@ class Utils:
             int(pd.Timestamp("{} 04:00:00".format(start_date), tz=est).timestamp()),    # pre-market
             int(pd.Timestamp("{} 20:00:00".format(end_date), tz=est).timestamp())    # after-hour
         ]
-        
-        
-        

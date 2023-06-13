@@ -142,3 +142,33 @@ class DB:
             timestamps = []
 
         return dates, timestamps
+    
+    def push_eod(
+        self, ticker:str, df:pd.DataFrame,
+    ) -> bool:
+        """_summary_
+
+        Args:
+            ticker (str): _description_
+            df (pd.DataFrame): _description_
+
+        Returns:
+            bool: _description_
+        """
+        ...
+    
+    def push_intra(
+        self, ticker:str, df:pd.DataFrame,
+    ) -> bool:
+        """_summary_
+
+        Args:
+            ticker (str): _description_
+            df (pd.DataFrame): _description_
+
+        Returns:
+            bool: _description_
+        """
+        ...
+    
+    

@@ -17,8 +17,9 @@ class eodApiRequestHandler:
         # daily api count
         self.api_calls = api_calls  # daily calls
         # api calls per request
-        self.intra_calls_per_reqeust = 5
-        self.intra_calls_per_reqeust = 1
+        self.eod_calls_per_reqeust = 1      # end-of-day
+        self.intra_calls_per_reqeust = 5    # intraday
+        self.fund_calls_per_rquest = 10     # fundamental data
 
     def request_eod(
         self, ticker:str, exchange:str, 
