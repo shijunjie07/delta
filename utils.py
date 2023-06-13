@@ -121,7 +121,7 @@ class Utils:
 
         # construct dates between input dates
         nyse = mcal.get_calendar('NYSE')
-        schedule = nyse.schedule(start_date, end_date)
+        schedule = nyse.schedule(start_date, end_date) # type: ignore
         trading_dates = [
             dt.datetime.strftime(d, self.desire_fmt)
             for d in schedule.index.normalize().tolist()
@@ -198,7 +198,7 @@ class Utils:
                 if (i == 0):
                     current_dt_obj = start_dt_obj
                 else:
-                    current_dt_obj = last_end_dt_obj + dt.timedelta(days=1)
+                    current_dt_obj = last_end_dt_obj + dt.timedelta(days=1) # type: ignore
                 future_dt_obj = current_dt_obj + dt.timedelta(days=max_days_period)
                 future_end_days_perd = (future_dt_obj - end_dt_obj).days
                 
@@ -227,19 +227,19 @@ class Utils:
 
     def _construct_trading_period_timestamps(
         self, start_date:str, end_date:str,
-    ) -> tuple[int]:
-        """construct start and end timestamps for the traing period
+    ) -> list[int]:
+        """_summary_
 
         Args:
             start_date (str): _description_
             end_date (str): _description_
 
         Returns:
-            tuple[int]: _description_
+            _type_: _description_
         """
         return [
             int(pd.Timestamp("{} 04:00:00".format(start_date), tz=est).timestamp()),    # pre-market
-            int(pd.Timestamp("{} 20:00:00".format(end_date), tz=est).timestamp())       # after-hour
+            int(pd.Timestamp("{} 20:00:00".format(end_date), tz=est).timestamp())    # after-hour
         ]
         
         

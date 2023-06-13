@@ -19,7 +19,7 @@ import pandas_market_calendars as mcal
 # local packages
 from delta.utils import Utils
 from delta.db import DB
-from delta.eod_api_request_handler import eodApiRequestHandler
+from request_handler import eodApiRequestHandler
 
 
 
@@ -114,7 +114,12 @@ class databaseUpdate(Utils, DB, eodApiRequestHandler):
             self.logger.info('update {}'.format(ticker))
             
             # check table exists, if not create tables
-            is_table_exists = self.is_tkl_tables_exist(ticker)
+            is_table_exists, crt_tables = self.is_tkl_tables_exist(ticker)
+            # if table not exists, then create table 
+            if (not is_table_exists):
+                self.crt_tables(ticker, crt_tables)        # creat tables
+
+            # by this time, we will have all table types in place.
 
             # pull dates & tss from db
             exist_dates, exist_timestamps = self.pull_tkl_dts(
@@ -148,18 +153,38 @@ class databaseUpdate(Utils, DB, eodApiRequestHandler):
                 continue
             
             # request intra from api
-            
             # construct timestamps for periods within request start and end date
+            intra_json = []
             timestamp_periods = self.timestamp_periods(
                 max_days_period=self.max_days, start_date=start_date, end_date=end_date,
             )
-                # is_success_intra_request, intra_json = self.request_intra(
-                    
-                # )
-            # exit()
-
-
-            
+            is_intra_error_breaks = False
+            for start_ts, end_ts in timestamp_periods:
+                # request intra from api
+                is_success_intra_request, intra_json_perd = self.request_intra(
+                    ticker, self.exchange, start_ts,
+                    end_ts
+                )
+                # check if resp valid
+                if (is_success_intra_request):
+                    self.logger.info('intra request success ({} - {}): {}; length of data: {}'.format(
+                        start_ts, end_ts,
+                        is_success_intra_request, len(intra_json_perd),
+                    ))
+                    # extend intra_json
+                    intra_json.extend(intra_json_perd)
+                else:
+                    self.logger.info('intra request success ({} - {}): {}; \'{}\''.format(
+                        start_ts, end_ts,
+                        is_success_intra_request, intra_json_perd,
+                    ))
+                    self.http_error_tkls.append(ticker) # error, save for later action
+                    is_intra_error_breaks = True
+                    break
+            # check intra http error
+            if (is_intra_error_breaks):
+                intra_json = []
+                continue
                         
             # push eod & intra
             

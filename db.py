@@ -25,14 +25,14 @@ class DB:
                     tickers.extend(list(pd.read_csv(f"{ticker_path}{cap}.csv")["Symbol"]))
         return [tkl.replace(" ", "") for tkl in tickers if (isinstance(tkl, str))]
 
-    def is_tkl_tables_exist(self, ticker:str) -> bool:
+    def is_tkl_tables_exist(self, ticker:str) -> tuple[bool, list[str]]:
         """check if the input ticker exists in database
 
         Args:
-            ticker (str): ticker
-            
+            ticker (str): _description_
+
         Returns:
-            bool: is table exist
+            tuple[bool, list[str]]: _description_
         """
  
         logging_info = 'check if {} tables exist: '.format(ticker)
@@ -51,13 +51,10 @@ class DB:
             is_exist = True
 
         logging_info = logging_info + str(is_exist)
-        self.logger.info(logging_info)
+        self.logger.info(logging_info) 
         
-        if (not is_exist):
-            self._crt_tables(ticker, crt_tables)        # creat tables
-
         # return
-        return is_exist
+        return is_exist, crt_tables
         
     def pull_eod(self, tickers:list[str], dates_period:list):
         """_summary_
@@ -68,7 +65,7 @@ class DB:
         """
         ...
 
-    def _crt_tables(self, ticker:str, table_types:str):
+    def crt_tables(self, ticker:str, table_types:list[str]):
         """create ticker tables with the input table types
 
         Args:
@@ -100,7 +97,7 @@ class DB:
     def pull_tkl_dts(
         self, ticker:str, start_date:str,
         end_date:str, start_ts:int, end_ts:int
-    ) -> tuple[list]:
+    ) -> tuple[list[str], list[int]]:
         """pull existing dates and timestamps from database
 
         Args:
@@ -111,9 +108,9 @@ class DB:
             end_ts (int): _description_
 
         Returns:
-            tuple[list]: _description_
+            tuple[list[str], list[int]]: _description_
         """
-
+    
         dt_obj_index = 0
         
         # queries
@@ -140,7 +137,7 @@ class DB:
         
         # extract timestamps
         if (raw_intra):
-            timestamps = [x[dt_obj_index] for x in raw_intra]
+            timestamps = [int(x[dt_obj_index]) for x in raw_intra]
         else:
             timestamps = []
 
