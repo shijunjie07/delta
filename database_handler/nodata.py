@@ -10,8 +10,6 @@ import sqlite3
 import logging
 import datetime as dt
 
-
-
 class noDataDB:
     
     def __init__(self, logger:logging.Logger, DB_PATH:str):
