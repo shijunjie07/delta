@@ -18,8 +18,8 @@ import pandas_market_calendars as mcal
 
 # local packages
 from delta.utils import Utils
-from delta.db import DB
-from request_handler import eodApiRequestHandler
+from delta.database_handler.ticker import tickerDB
+from delta.request_handler import eodApiRequestHandler
 
 
 
@@ -33,7 +33,7 @@ logger = logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class databaseUpdate(Utils, DB, eodApiRequestHandler):
+class databaseUpdate(Utils, tickerDB, eodApiRequestHandler):
     """_summary_
     """
     
@@ -55,7 +55,7 @@ class databaseUpdate(Utils, DB, eodApiRequestHandler):
         
         # init classes
         Utils.__init__(self, self.logger)
-        DB.__init__(self, self.logger, self.DB_PATH)
+        tickerDB.__init__(self, self.logger, self.DB_PATH)
         eodApiRequestHandler.__init__(self, self.API_KEY)
         
         self.market_caps = [        # market caps to pull tickers
@@ -221,7 +221,25 @@ class databaseUpdate(Utils, DB, eodApiRequestHandler):
                 continue
             
             # pull dates & tss from db
-            
+            exist_dates, exist_timestamps = self.pull_tkl_dts(
+                ticker, start_date, end_date,
+                trading_timestamps[0], trading_timestamps[-1],
+            )
+            self.logger.info('after update: existing dts: {}(date) {}(tss)'.format(len(exist_dates), len(exist_timestamps)))
+
+            # check missing
+            missing_trading_dates, missing_timestamps = self.missing_dts(
+                reference_dates=trading_dates, reference_timestamps=trading_timestamps,
+                comparant_dates=exist_dates, comparant_timestamps=exist_timestamps
+            )
+            self.logger.info('after update: missing dts: {}(date) {}(tss)'.format(len(missing_trading_dates), len(missing_timestamps)))
+            # continue if no missing dts
+            if ((not missing_trading_dates) and (not missing_timestamps)):
+                self.logger.info('no missing dts; moving to next ticker')
+                continue
+            else:
+                # push no data dts
+                
             # double check missing
             # if still missing then define as no data dates
             # push to NODATADB

@@ -5,7 +5,8 @@ import logging
 import datetime as dt
 
 
-class DB:
+
+class tickerDB:
     
     def __init__(self, logger:logging.Logger, DB_PATH:str):
         self.logger = logger
@@ -163,8 +164,8 @@ class DB:
         
         # push data
         try:
-            df.to_sql('{}_eod'.format(ticker), self.conn, if_exists='append', index=False)
-            self.conn.commit()
+            df.to_sql('{}_eod'.format(ticker), self.con, if_exists='append', index=False)
+            self.con.commit()
             self.logger.info('success push eod')
             return True
         except Exception as e:
@@ -192,8 +193,8 @@ class DB:
         
         # push data
         try:
-            df.to_sql('{}_intra'.format(ticker), self.conn, if_exists='append', index=False)
-            self.conn.commit()
+            df.to_sql('{}_intra'.format(ticker), self.con, if_exists='append', index=False)
+            self.con.commit()
             self.logger.info('success push intra')
             return True
         except Exception as e:
