@@ -1,3 +1,9 @@
+# -----------------------
+# noDataDB class
+# @author: Shi Junjie
+# Wed 14 Jun 2023
+# -----------------------
+
 import os
 import pandas as pd
 import sqlite3

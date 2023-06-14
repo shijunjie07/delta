@@ -1,3 +1,9 @@
+# -----------------------
+# eodApiRequestHandler class
+# @author: Shi Junjie
+# Sat 3 Jun 2023
+# -----------------------
+
 import datetime as dt
 from eod import EodHistoricalData
 from urllib3.exceptions import HTTPError
