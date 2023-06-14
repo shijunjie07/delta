@@ -164,3 +164,4 @@ environment.yml
 .vscode/
 .DS_Store
 .conda/
+main.py
