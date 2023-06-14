@@ -37,9 +37,15 @@ class databaseUpdate(Utils, DB, eodApiRequestHandler):
     """_summary_
     """
     
-    def __init__(self, logger:logging.Logger):
+    def __init__(self, logger:logging.Logger, activate_logger:bool=True):
         self.logger = logger    # logger
-        
+        # determine if activate logger
+        self.activate_logger = activate_logger
+        if (self.activate_logger):
+            self.logger.setLevel(logging.INFO)
+        else:
+            self.logger.setLevel(logging.WARNING)
+
         # init env vars
         self.DB_PATH = os.environ['DB_PATH']
         self.API_KEY = os.environ['API_KEY']
@@ -224,4 +230,4 @@ class databaseUpdate(Utils, DB, eodApiRequestHandler):
             # exit()
         
          
-databaseUpdate(logger).update('2021-01-01', '2023-02-02')
+databaseUpdate(logger, activate_logger=True).update('2021-01-01', '2023-02-02')
