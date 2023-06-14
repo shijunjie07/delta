@@ -143,32 +143,113 @@ class DB:
 
         return dates, timestamps
     
-    def push_eod(
-        self, ticker:str, df:pd.DataFrame,
-    ) -> bool:
-        """_summary_
+    def push_eod(self, ticker: str, df: pd.DataFrame) -> bool:
+        """
+        Pushes the data from a pandas DataFrame into the corresponding end-of-day (EOD) table in the database.
 
         Args:
-            ticker (str): _description_
-            df (pd.DataFrame): _description_
+            ticker (str): The ticker symbol of the stock or financial instrument.
+            df (pd.DataFrame): The DataFrame containing the data to be pushed.
 
         Returns:
-            bool: _description_
+            bool: True if the data is successfully pushed, False otherwise.
         """
-        ...
+        self.logger.info('prepare for eod push')
+        # format column name
+        is_success_format, df = self._format_column_names(df, 'eod')
+        if (not is_success_format):
+            self.logger.info(' * fail to push eod')
+            return False
+        
+        # push data
+        try:
+            df.to_sql('{}_eod'.format(ticker), self.conn, if_exists='append', index=False)
+            self.conn.commit()
+            self.logger.info('success push eod')
+            return True
+        except Exception as e:
+            self.logger.info('error occurred while pushing eod, {}'.format(ticker, e))
+            return False
     
-    def push_intra(
-        self, ticker:str, df:pd.DataFrame,
-    ) -> bool:
-        """_summary_
+    def push_intra(self, ticker:str, df:pd.DataFrame) -> bool:
+        """
+        Pushes the data from a pandas DataFrame into the corresponding intra-day table in the database.
 
         Args:
-            ticker (str): _description_
-            df (pd.DataFrame): _description_
+            ticker (str): The ticker symbol of the stock or financial instrument.
+            df (pd.DataFrame): The DataFrame containing the data to be pushed.
 
         Returns:
-            bool: _description_
+            bool: True if the data is successfully pushed, False otherwise.
         """
-        ...
-    
-    
+        self.logger.info('prepare for intra push')
+
+        # format column name
+        is_success_format, df = self._format_column_names(df, 'intra')
+        if (not is_success_format):
+            self.logger.info(' * fail to push intra')
+            return False
+        
+        # push data
+        try:
+            df.to_sql('{}_intra'.format(ticker), self.conn, if_exists='append', index=False)
+            self.conn.commit()
+            self.logger.info('success push intra')
+            return True
+        except Exception as e:
+            self.logger.info('error occurred while pushing intra, {}'.format(ticker, e))
+            return False
+        
+    def _format_column_names(
+        self, df: pd.DataFrame, table_type:str
+    ) -> tuple[bool, pd.DataFrame]:
+        """Formats the column names of a DataFrame.
+
+        Args:
+            df (pd.DataFrame): The DataFrame whose column names need to be formatted.
+
+        Returns:
+            tuple[bool, pd.DataFrame]: A tuple containing a boolean value indicating
+            whether the formatting was successful and the DataFrame with the
+            formatted column names.
+        """
+        self.logger.info(' - start to format columns for {} push'.format(table_type))
+        # Create a new DataFrame to store the formatted column names
+        formatted_df = pd.DataFrame()
+        
+        # check table types
+        if (table_type == 'eod'):
+            # Mapping of original eod column names to formatted column names
+            columns = {
+                'date': 'date_day',
+                'open': 'd_open',
+                'high': 'd_high',
+                'low': 'd_low',
+                'close': 'd_close',
+                'volume': 'd_volume',
+            }
+        elif (table_type == 'intra'):
+            # Mapping of original intra column names to formatted column names
+            columns = {
+                'timestamp': 'date_time',
+                'open': 'm_open',
+                'high': 'm_high',
+                'low': 'm_low',
+                'close': 'm_close',
+                'volume': 'm_volume',
+            }
+        else:
+            self.logger.info(' - fail to format, wrong table type: \'{}\''.format(table_type))
+            return False, formatted_df
+        
+        # Check if the keys of columns match the column names of the DataFrame
+        if set(columns.keys()) != set(df.columns):
+            self.logger.info(' - fail to format, keys of columns do not match the column names of the df')
+            return False, formatted_df
+        
+        # Iterate over the original column names and format them
+        for col in df.columns:
+            formatted_df[columns[col]] = df[col]
+        
+        # Return the DataFrame with the formatted column names
+        return True, formatted_df 

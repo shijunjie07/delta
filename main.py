@@ -63,7 +63,7 @@ class databaseUpdate(Utils, DB, eodApiRequestHandler):
         self.exchange = 'us'     # exchange code
         self.tickers = self.get_mrkcap_tkls(self.TICKER_PATH, self.market_caps)   # tickers to update
         
-        self.http_error_tkls = []       # list of tickers encountered http error
+        self.error_tkls = []       # list of tickers encountered error
         self.max_days = 118     # maximum periods between ‘from’ and ‘to’ for 1 minute intra data
 
     # main func
@@ -152,10 +152,10 @@ class databaseUpdate(Utils, DB, eodApiRequestHandler):
                         is_success_eod_request, len(eod_json),
                     ))
                 else:
-                    self.logger.info('eod request success: {}; \'{}\''.format(
+                    self.logger.info('eod request success: {}; \'{}\', save for later action'.format(
                         is_success_eod_request, eod_json,
                     ))
-                    self.http_error_tkls.append(ticker) # error, save for later action
+                    self.error_tkls.append(ticker) # error, save for later action
                     continue
             
             # if missing timestamps
@@ -182,11 +182,11 @@ class databaseUpdate(Utils, DB, eodApiRequestHandler):
                         # extend intra_json
                         intra_json.extend(intra_json_perd)
                     else:
-                        self.logger.info('intra request success ({} - {}): {}; \'{}\''.format(
+                        self.logger.info('intra request success ({} - {}): {}; \'{}\', save for later action'.format(
                             start_ts, end_ts,
                             is_success_intra_request, intra_json_perd,
                         ))
-                        self.http_error_tkls.append(ticker) # error, save for later action
+                        self.error_tkls.append(ticker) # error, save for later action
                         is_intra_error_breaks = True
                         break
                 # check intra http error
@@ -207,8 +207,12 @@ class databaseUpdate(Utils, DB, eodApiRequestHandler):
             )
             
             # push eod & intra
-            eod_push_status = self.push_eod(ticker, df_eod)
-            intra_push_status = self.push_intra(ticker, df_intra)
+            is_success_eod_push = self.push_eod(ticker, df_eod)
+            is_success_intra_push = self.push_intra(ticker, df_intra)
+            if ((not is_success_eod_push) or (not is_success_intra_push)):
+                self.logger.info('error pushing data, save for later action')
+                self.error_tkls.append(ticker)
+                continue
             
             # pull dates & tss from db
             
@@ -219,5 +223,5 @@ class databaseUpdate(Utils, DB, eodApiRequestHandler):
             # move to next ticker
             # exit()
         
-        
+         
 databaseUpdate(logger).update('2021-01-01', '2023-02-02')

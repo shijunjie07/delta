@@ -240,3 +240,4 @@ class Utils:
             int(pd.Timestamp("{} 04:00:00".format(start_date), tz=est).timestamp()),    # pre-market
             int(pd.Timestamp("{} 20:00:00".format(end_date), tz=est).timestamp())    # after-hour
         ]
+        
