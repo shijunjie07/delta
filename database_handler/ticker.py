@@ -17,9 +17,17 @@ class tickerDB:
         self.table_names = self._table_names()
         self.table_types = ['eod', 'intra']
 
-    def get_mrkcap_tkls(self, ticker_path:str, market_caps:list[str]):
-        """
-        :return: a list of tickers
+    def get_mrkcap_tkls(
+        self, ticker_path:str, market_caps:list[str]
+    ) -> list[str]:
+        """_summary_
+
+        Args:
+            ticker_path (str): _description_
+            market_caps (list[str]): _description_
+
+        Returns:
+            list[str]: a list of tickers
         """
         tickers = []
         for cap in market_caps:
@@ -66,6 +74,7 @@ class tickerDB:
         """
         ...
 
+
     def crt_tables(self, ticker:str, table_types:list[str]):
         """create ticker tables with the input table types
 
@@ -78,10 +87,12 @@ class tickerDB:
             #create eod
             self.cur.execute(f"CREATE TABLE IF NOT EXISTS {ticker}_eod(\
                 date_day DATE UNIQUE, d_open FLOAT, d_high FLOAT, d_low FLOAT, d_close FLOAT, d_volume BIGINT);")
+            self.con.commit()
         if ('intra' in table_types):
             #create intra
             self.cur.execute(f"CREATE TABLE IF NOT EXISTS {ticker}_intra(\
                 date_time DATETIME UNIQUE, m_open FLOAT, m_high FLOAT, m_low FLOAT, m_close FLOAT, m_volume BIGINT);")
+            self.con.commit()
 
         logging_info = ' - created {} tables'.format(', '.join(table_types))
         self.logger.info(logging_info)
