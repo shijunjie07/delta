@@ -9,7 +9,7 @@ import pytz
 import time
 import json
 import logging
-import numpy as npß
+import numpy as np
 import pandas as pd
 import datetime as dt
 from tqdm import tqdm
@@ -18,7 +18,7 @@ import pandas_market_calendars as mcal
 
 # local packages
 from delta.utils import Utils
-from delta.database_handler.ticker import tickerDB
+from delta.database_handler import DBHandler
 from delta.request_handler import eodApiRequestHandler
 
 
@@ -33,8 +33,17 @@ logger = logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class databaseUpdate(Utils, tickerDB, eodApiRequestHandler):
-    """_summary_
+class databaseUpdate(
+    Utils, DBHandler,
+    eodApiRequestHandler,
+):
+    """database update class
+
+    Args:
+        Utils (_type_): _description_
+        tickerDB (_type_): _description_
+        noDataDB (_type_): _description_
+        eodApiRequestHandler (_type_): _description_
     """
     
     def __init__(self, logger:logging.Logger, activate_logger:bool=True):
@@ -55,7 +64,7 @@ class databaseUpdate(Utils, tickerDB, eodApiRequestHandler):
         
         # init classes
         Utils.__init__(self, self.logger)
-        tickerDB.__init__(self, self.logger, self.DB_PATH)
+        DBHandler.__init__(self, self.logger, self.DB_PATH, self.NO_DATA_DB_PATH)
         eodApiRequestHandler.__init__(self, self.API_KEY)
         
         self.market_caps = [        # market caps to pull tickers
@@ -119,13 +128,18 @@ class databaseUpdate(Utils, tickerDB, eodApiRequestHandler):
             self.logger.info('-----------------------------------')
             self.logger.info('update {}'.format(ticker))
             
-            # check table exists, if not create tables
-            is_table_exists, crt_tables = self.is_tkl_tables_exist(ticker)
-            # if table not exists, then create table 
-            if (not is_table_exists):
-                self.crt_tables(ticker, crt_tables)        # creat tables
-
-            # by this time, we will have all table types in place.
+            # check ticker table exists, if not create tables
+            is_tkl_table_exists, crt_tkl_tables = self.is_tkl_tables_exist(ticker)
+            # if ticker table not exists, then create table 
+            if (not is_tkl_table_exists):
+                self.crt_tkl_tables(ticker, crt_tkl_tables)        # creat tables
+            # chcek nodata dt table exists, if not create table
+            is_nodata_table_exists = self.is_nodata_table_exists(ticker)
+            if (not is_nodata_table_exists):
+                self.crt_nodata_table(ticker)
+                
+            # by this time, we will have all dt and ticker table types in place.
+            # ----------------------------------------------------
 
             # pull dates & tss from db
             exist_dates, exist_timestamps = self.pull_tkl_dts(
@@ -134,12 +148,24 @@ class databaseUpdate(Utils, tickerDB, eodApiRequestHandler):
             )
             self.logger.info('existing dts: {}(date) {}(tss)'.format(len(exist_dates), len(exist_timestamps)))
 
+            # pull nodata dts
+            nodata_trading_dates, nodata_timestamps = self.pull_nodata_dts(ticker)
+            exist_dates.append(nodata_trading_dates)
+            exist_timestamps.append(nodata_timestamps) 
             # check missing
             missing_trading_dates, missing_timestamps = self.missing_dts(
                 reference_dates=trading_dates, reference_timestamps=trading_timestamps,
                 comparant_dates=exist_dates, comparant_timestamps=exist_timestamps
             )
             self.logger.info('missing dts: {}(date) {}(tss)'.format(len(missing_trading_dates), len(missing_timestamps)))
+            
+            # # rm nodata dts from missing dts
+            # missing_trading_dates = list(
+            #     set(missing_trading_dates) - set(nodata_trading_dates)
+            # )
+            # missing_timestamps = list(
+            #     set(missing_timestamps) - set(nodata_timestamps)
+            # )
             # continue if no missing dts
             if ((not missing_trading_dates) and (not missing_timestamps)):
                 self.logger.info('no missing dts; moving to next ticker')
@@ -239,7 +265,7 @@ class databaseUpdate(Utils, tickerDB, eodApiRequestHandler):
                 continue
             else:
                 # push no data dts
-                
+                self.push_nodata_dts()
             # double check missing
             # if still missing then define as no data dates
             # push to NODATADB
@@ -247,5 +273,5 @@ class databaseUpdate(Utils, tickerDB, eodApiRequestHandler):
             # move to next ticker
             # exit()
         
-         
-databaseUpdate(logger, activate_logger=True).update('2021-01-01', '2023-02-02')
+updater = databaseUpdate(logger, activate_logger=True)
+updater.update('2021-01-01', '2023-02-02')

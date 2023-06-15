@@ -20,7 +20,7 @@ class tickerDB:
         self.con = sqlite3.connect(self.DB_PATH, check_same_thread=False)
         self.cur = self.con.cursor()
         
-        self.table_names = self._table_names()
+        self.exist_ticker_table_names = self._ticker_table_names()
         self.table_types = ['eod', 'intra']
 
     def get_mrkcap_tkls(
@@ -54,7 +54,7 @@ class tickerDB:
         crt_tables = []
         for table_type in self.table_types:
             table_name = '_'.join([ticker, table_type])
-            if (table_name in self.table_names):
+            if (table_name in self.exist_ticker_table_names):
                 continue
             else:
                 # append for later action: create table
@@ -81,7 +81,7 @@ class tickerDB:
         ...
 
 
-    def crt_tables(self, ticker:str, table_types:list[str]):
+    def crt_tkl_tables(self, ticker:str, table_types:list[str]):
         """create ticker tables with the input table types
 
         Args:
@@ -100,11 +100,11 @@ class tickerDB:
                 date_time DATETIME UNIQUE, m_open FLOAT, m_high FLOAT, m_low FLOAT, m_close FLOAT, m_volume BIGINT);")
             self.con.commit()
 
-        logging_info = ' - created {} tables'.format(', '.join(table_types))
+        logging_info = '- created {} tables'.format(', '.join(table_types))
         self.logger.info(logging_info)
 
 
-    def _table_names(self):
+    def _ticker_table_names(self):
         """
         
         """
@@ -176,7 +176,7 @@ class tickerDB:
         # format column name
         is_success_format, df = self._format_column_names(df, 'eod')
         if (not is_success_format):
-            self.logger.info(' * fail to push eod')
+            self.logger.info('* fail to push eod')
             return False
         
         # push data
@@ -205,7 +205,7 @@ class tickerDB:
         # format column name
         is_success_format, df = self._format_column_names(df, 'intra')
         if (not is_success_format):
-            self.logger.info(' * fail to push intra')
+            self.logger.info('* fail to push intra')
             return False
         
         # push data
@@ -231,7 +231,7 @@ class tickerDB:
             whether the formatting was successful and the DataFrame with the
             formatted column names.
         """
-        self.logger.info(' - start to format columns for {} push'.format(table_type))
+        self.logger.info('- start to format columns for {} push'.format(table_type))
         # Create a new DataFrame to store the formatted column names
         formatted_df = pd.DataFrame()
         
@@ -257,12 +257,12 @@ class tickerDB:
                 'volume': 'm_volume',
             }
         else:
-            self.logger.info(' - fail to format, wrong table type: \'{}\''.format(table_type))
+            self.logger.info('- fail to format, wrong table type: \'{}\''.format(table_type))
             return False, formatted_df
         
         # Check if the keys of columns match the column names of the DataFrame
         if set(columns.keys()) != set(df.columns):
-            self.logger.info(' - fail to format, keys of columns do not match the column names of the df')
+            self.logger.info('- fail to format, keys of columns do not match the column names of the df')
             return False, formatted_df
         
         # Iterate over the original column names and format them

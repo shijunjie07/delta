@@ -164,4 +164,5 @@ environment.yml
 .vscode/
 .DS_Store
 .conda/
+test/
 main.py
