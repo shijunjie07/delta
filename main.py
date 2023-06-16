@@ -5,21 +5,16 @@
 # ----------------------------------------------------------
 
 import os
-import pytz
-import time
-import json
 import logging
 import numpy as np
 import pandas as pd
 import datetime as dt
 from tqdm import tqdm
-from eod import EodHistoricalData
-import pandas_market_calendars as mcal
 
 # local packages
 from delta.utils import Utils
 from delta.database_handler import DBHandler
-from delta.request_handler import eodApiRequestHandler
+from delta.request_handler import EodApiRequestHandler
 
 
 
@@ -33,9 +28,9 @@ logger = logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class databaseUpdate(
+class DatabaseUpdate(
     Utils, DBHandler,
-    eodApiRequestHandler,
+    EodApiRequestHandler,
 ):
     """database update class
 
@@ -65,7 +60,7 @@ class databaseUpdate(
         # init classes
         Utils.__init__(self, self.logger)
         DBHandler.__init__(self, self.logger, self.DB_PATH, self.NO_DATA_DB_PATH)
-        eodApiRequestHandler.__init__(self, self.API_KEY)
+        EodApiRequestHandler.__init__(self, self.API_KEY)
         
         self.market_caps = [        # market caps to pull tickers
             'nano',
@@ -146,7 +141,6 @@ class databaseUpdate(
                 ticker, start_date, end_date,
                 trading_timestamps[0], trading_timestamps[-1],
             )
-            self.logger.info('existing dts: {}(date) {}(tss)'.format(len(exist_dates), len(exist_timestamps)))
 
             # pull nodata dts
             nodata_trading_dates, nodata_timestamps = self.pull_nodata_dts(ticker)
@@ -157,16 +151,7 @@ class databaseUpdate(
                 reference_dates=trading_dates, reference_timestamps=trading_timestamps,
                 comparant_dates=exist_dates, comparant_timestamps=exist_timestamps
             )
-            self.logger.info('missing dts: {}(date) {}(tss)'.format(len(missing_trading_dates), len(missing_timestamps)))
             
-            # # rm nodata dts from missing dts
-            # missing_trading_dates = list(
-            #     set(missing_trading_dates) - set(nodata_trading_dates)
-            # )
-            # missing_timestamps = list(
-            #     set(missing_timestamps) - set(nodata_timestamps)
-            # )
-            # continue if no missing dts
             if ((not missing_trading_dates) and (not missing_timestamps)):
                 self.logger.info('no missing dts; moving to next ticker')
                 continue
@@ -251,27 +236,26 @@ class databaseUpdate(
                 ticker, start_date, end_date,
                 trading_timestamps[0], trading_timestamps[-1],
             )
-            self.logger.info('after update: existing dts: {}(date) {}(tss)'.format(len(exist_dates), len(exist_timestamps)))
-
+            
+            # double check missing
+            # if still missing then define as no data dates
+            # push to NODATADB
             # check missing
             missing_trading_dates, missing_timestamps = self.missing_dts(
                 reference_dates=trading_dates, reference_timestamps=trading_timestamps,
                 comparant_dates=exist_dates, comparant_timestamps=exist_timestamps
             )
-            self.logger.info('after update: missing dts: {}(date) {}(tss)'.format(len(missing_trading_dates), len(missing_timestamps)))
             # continue if no missing dts
             if ((not missing_trading_dates) and (not missing_timestamps)):
                 self.logger.info('no missing dts; moving to next ticker')
                 continue
             else:
                 # push no data dts
-                self.push_nodata_dts()
-            # double check missing
-            # if still missing then define as no data dates
-            # push to NODATADB
+                self.push_nodata_dts(exist_dates, missing_trading_dates, missing_timestamps)
+
             
             # move to next ticker
-            # exit()
+
         
-updater = databaseUpdate(logger, activate_logger=True)
+updater = DatabaseUpdate(logger, activate_logger=True)
 updater.update('2021-01-01', '2023-02-02')

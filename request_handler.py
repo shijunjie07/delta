@@ -4,11 +4,10 @@
 # Sat 3 Jun 2023
 # -----------------------
 
-import datetime as dt
 from eod import EodHistoricalData
 from urllib3.exceptions import HTTPError
 
-class eodApiRequestHandler:
+class EodApiRequestHandler:
     
     def __init__(self, api_key:str, api_calls=100000):
         """_summary_

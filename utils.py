@@ -4,16 +4,14 @@
 # Fri 9 Jun 2023
 # ---------------------------------
 
-import os
 import re
 import pytz
-import sqlite3
 import logging
 import numpy as np
 import pandas as pd
 import datetime as dt
-
 import pandas_market_calendars as mcal
+
 
 est = pytz.timezone("America/New_York") # Eastern time
 
@@ -106,7 +104,6 @@ class Utils:
         # if not numpy number types then return itself
         return input_data
     
-    
     def all_trading_dts(self, start_date:str, end_date:str) -> tuple[list[str], list[int]]:
         """construct all trading dates and timestamps between start and end dates
            * only call this function once *
@@ -159,10 +156,18 @@ class Utils:
         Returns:
             tuple[list[str], list[int]]: _description_
         """
+        self.logger.info('checking missing dts: {}(ref_dates), {}(ref_tss)'.format(
+            len(reference_dates), len(reference_timestamps)
+        ))
+        self.logger.info('                   {}(cmp_dates), {}(cmp_tss)'.format(
+            len(comparant_dates), len(comparant_timestamps)
+        ))
         
         # construct missings
         missing_dates = list(set(reference_dates) - set(comparant_dates))
         missing_timestamps = list(set(reference_timestamps) - set(comparant_timestamps))
+        
+        self.logger.info('- missing dts: {}(dates) {}(tss)'.format(len(missing_dates), len(missing_timestamps)))
         
         return missing_dates, missing_timestamps
         

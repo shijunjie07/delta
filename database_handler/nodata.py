@@ -4,14 +4,11 @@
 # Wed 14 Jun 2023
 # -----------------------
 
-import os
 import re
-import pandas as pd
 import sqlite3
 import logging
-import datetime as dt
 
-class noDataDB:
+class NoDataDB:
     
     def __init__(self, logger:logging.Logger, DB_PATH:str):
         self.logger = logger
@@ -53,7 +50,6 @@ class noDataDB:
         # return
         return is_exist, crt_tables
         
-
     def crt_nodata_table(self, ticker:str, table_types:list[str]):
         """create no data table for a ticker
 
@@ -162,7 +158,6 @@ class noDataDB:
         else:
             self.logger.error('\'{}\' not in nodata db'.format(ticker))
             raise ValueError('\'{}\' not in nodata db'.format(ticker))
-
 
     def _nodata_table_names(self):
         """

@@ -1,8 +1,14 @@
-from delta.database_handler.nodata import noDataDB
-from delta.database_handler.ticker import tickerDB
+# -----------------------
+# DBHandler class
+# @author: Shi Junjie
+# Fri 15 Jun 2023
+# -----------------------
+
+from delta.database_handler.nodata import NoDataDB
+from delta.database_handler.ticker import TickerDB
 import logging
 
-class DBHandler(noDataDB, tickerDB):
+class DBHandler(NoDataDB, TickerDB):
     
     def __init__(self, logger:logging.Logger, DB_PATH:str,
                  NO_DATA_DB_PATH:str):
@@ -18,5 +24,5 @@ class DBHandler(noDataDB, tickerDB):
         self.NO_DATA_DB_PATH = NO_DATA_DB_PATH
         
         # init
-        tickerDB.__init__(self, self.logger, self.DB_PATH)
-        noDataDB.__init__(self, self.logger, self.NO_DATA_DB_PATH)
+        TickerDB.__init__(self, self.logger, self.DB_PATH)
+        NoDataDB.__init__(self, self.logger, self.NO_DATA_DB_PATH)
