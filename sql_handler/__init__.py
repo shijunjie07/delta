@@ -4,8 +4,8 @@
 # Fri 15 Jun 2023
 # -----------------------
 
-from delta.database_handler.nodata import NoDataDB
-from delta.database_handler.ticker import TickerDB
+from delta.sql_handler.nodata import NoDataDB
+from delta.sql_handler.ticker import TickerDB
 import logging
 
 class DBHandler(NoDataDB, TickerDB):

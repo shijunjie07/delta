@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 # local packages
 from delta.utils import Utils
-from delta.database_handler import DBHandler
+from delta.sql_handler import DBHandler
 from delta.request_handler import EodApiRequestHandler
 
 
