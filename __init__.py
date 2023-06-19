@@ -1,1 +1,1 @@
-from delta.db_updater import DBUpdater
+from updater import DBUpdater

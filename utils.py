@@ -30,7 +30,6 @@ class Utils:
         self.logger = logger
         self.desire_fmt = '%Y-%m-%d'
 
-        
     def dt_obj_2_str(self, dates:list) -> list[str]:
         """convert the list of input into string with format "%Y-%m-%d"
 

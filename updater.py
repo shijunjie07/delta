@@ -1,30 +1,20 @@
 # ----------------------------------------------------------
-# main
+# db updater
 # @author: Shi Junjie
 # Sat 3 Jun 2023
 # ----------------------------------------------------------
 
 import os
 import logging
-import numpy as np
 import pandas as pd
 import datetime as dt
 from tqdm import tqdm
 
 # local packages
 from delta.utils import Utils
+from delta.logger import logger
 from delta.sql_handler import DBHandler
 from delta.request_handler import EodApiRequestHandler
-
-
-# Configure the logger
-date_now = dt.datetime.now().strftime("%Y-%m-%dT%H-%M")
-logger_file_path = '{}/deltaLog_{}.log'.format(os.environ['LOG_PATH'], date_now)
-logger = logging.basicConfig(
-    filename=logger_file_path,
-    level=logging.INFO, format='%(asctime)s:%(levelname)s: | %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 
 class DBUpdater(
@@ -35,27 +25,24 @@ class DBUpdater(
 
     Args:
         Utils (_type_): _description_
-        tickerDB (_type_): _description_
-        noDataDB (_type_): _description_
-        eodApiRequestHandler (_type_): _description_
-    """
-    
+        DBHandler (_type_): _description_
+        EodApiRequestHandler (_type_): _description_
+    """ 
     def __init__(
-        self, logger:logging.Logger, activate_logger:bool=True,
+        self, activate_logger:bool=True,
         tickers:list[str]=None,
     ):
         """init DatabaseUpdate
 
         Args:
-            logger (logging.Logger): _description_
             activate_logger (bool, optional): _description_. Defaults to True.
+            tickers (list[str], optional): _description_. Defaults to None.
         """
-        self.logger = logger    # logger
         self.activate_logger = activate_logger  # determine if activate logger
         if (self.activate_logger):
-            self.logger.setLevel(logging.INFO)
+            logger.setLevel(logging.INFO)
         else:
-            self.logger.setLevel(logging.WARNING)
+            logger.setLevel(logging.NOTSET)
 
         # init env vars
         self.DB_PATH = os.environ['DB_PATH']
@@ -80,8 +67,8 @@ class DBUpdater(
             self.tickers = tickers
 
         # init classes
-        Utils.__init__(self, self.logger)
-        DBHandler.__init__(self, self.logger, self.DB_PATH, self.NO_DATA_DB_PATH)
+        Utils.__init__(self, logger)
+        DBHandler.__init__(self, logger, self.DB_PATH, self.NO_DATA_DB_PATH)
         EodApiRequestHandler.__init__(self, self.API_KEY)
 
         self.exchange = 'us'     # exchange code
@@ -125,16 +112,15 @@ class DBUpdater(
                 )
         
         print(init_string)
-        self.logger.info('\n{}'.format(init_string))
+        logger.info('\n{}'.format(init_string))
         
-
         # iter
         iter_obj = tqdm(range(len(self.tickers)))
         for i in iter_obj:
             ticker = self.tickers[i]
             iter_obj.set_description('{}'.format(ticker))
-            self.logger.info('-----------------------------------')
-            self.logger.info('update {}'.format(ticker))
+            logger.info('-----------------------------------')
+            logger.info('update {}'.format(ticker))
             
             # check ticker table exists, if not create tables
             is_tkl_table_exists, crt_tkl_tables = self.is_tkl_tables_exist(ticker)
@@ -166,7 +152,7 @@ class DBUpdater(
             )
             
             if ((not missing_trading_dates) and (not missing_timestamps)):
-                self.logger.info('no missing dts; moving to next ticker')
+                logger.info('no missing dts; moving to next ticker')
                 continue
             
             # if missing dates
@@ -178,11 +164,11 @@ class DBUpdater(
                 )
                 # check if resp valid
                 if (is_success_eod_request):
-                    self.logger.info('eod request success: {}; length of data: {}'.format(
+                    logger.info('eod request success: {}; length of data: {}'.format(
                         is_success_eod_request, len(eod_json),
                     ))
                 else:
-                    self.logger.info('eod request success: {}; \'{}\', save for later action'.format(
+                    logger.info('eod request success: {}; \'{}\', save for later action'.format(
                         is_success_eod_request, eod_json,
                     ))
                     self.error_tkls.append(ticker) # error, save for later action
@@ -205,14 +191,14 @@ class DBUpdater(
                     )
                     # check if resp valid
                     if (is_success_intra_request):
-                        self.logger.info('intra request success ({} - {}): {}; length of data: {}'.format(
+                        logger.info('intra request success ({} - {}): {}; length of data: {}'.format(
                             start_ts, end_ts,
                             is_success_intra_request, len(intra_json_perd),
                         ))
                         # extend intra_json
                         intra_json.extend(intra_json_perd)
                     else:
-                        self.logger.info('intra request success ({} - {}): {}; \'{}\', save for later action'.format(
+                        logger.info('intra request success ({} - {}): {}; \'{}\', save for later action'.format(
                             start_ts, end_ts,
                             is_success_intra_request, intra_json_perd,
                         ))
@@ -240,7 +226,7 @@ class DBUpdater(
             is_success_eod_push = self.push_eod(ticker, df_eod)
             is_success_intra_push = self.push_intra(ticker, df_intra)
             if ((not is_success_eod_push) or (not is_success_intra_push)):
-                self.logger.info('error pushing data, save for later action')
+                logger.info('error pushing data, save for later action')
                 self.error_tkls.append(ticker)
                 continue
             
@@ -260,7 +246,7 @@ class DBUpdater(
             )
             # continue if no missing dts
             if ((not missing_trading_dates) and (not missing_timestamps)):
-                self.logger.info('no missing dts; moving to next ticker')
+                logger.info('no missing dts; moving to next ticker')
                 continue
             else:
                 # push no data dts
@@ -270,12 +256,8 @@ class DBUpdater(
 
         # finishing update
         update_complete_info = "Complete {} tickers update, {} fail to update.".format(len(self.tickers)-len(self.error_tkls), len(self.error_tkls))
-        self.logger.info(update_complete_info)
+        logger.info(update_complete_info)
         print(update_complete_info)
         
         # choose to save error tickers
         self._check_save_error_tkls(self.error_tkls)
-
-
-# updater = DBUpdater(logger, activate_logger=True)
-# updater.update('2021-01-01', '2023-02-02')
