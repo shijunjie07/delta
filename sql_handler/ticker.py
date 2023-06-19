@@ -68,29 +68,14 @@ class GetData:
 
         return dates, timestamps
     
-    def pull_eod(self, ticker:str, start_date:str, end_date:str) -> pd.DataFrame:
-        """pull eod data
+    def pull_ipo_dates(self, tickers:list[str]) -> dict[str, str]:
+        """pull ipo dates
 
         Args:
-            ticker (str): _description_
-            start_date (str): _description_
-            end_date (str): _description_
+            tickers (list[str]): _description_
 
         Returns:
-            pd.DataFrame: _description_
-        """
-        ...
-
-    def pull_intra(self, ticker:str, start_ts:int, end_ts:int) -> pd.DataFrame:
-        """pull intraday data
-
-        Args:
-            ticker (str): _description_
-            start_ts (int): _description_
-            end_ts (int): _description_
-
-        Returns:
-            pd.DataFrame: _description_
+            dict[str, str]: ipo dates
         """
         ...
 

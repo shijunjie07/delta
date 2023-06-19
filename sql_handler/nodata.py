@@ -80,7 +80,7 @@ class NoDataDB:
             timestamps (list): _description_
         """
         # check format
-        self.logger.info("start to push nodata dts: {}(dates), {}(timestamps)".format(
+        self.logger.info("start to push nodata dts: {}(dates), {}(tss)".format(
             len(dates), len(timestamps)))
         is_right_fmt = self._check_dts_fmt(dates, timestamps)
         if (not is_right_fmt):
@@ -145,6 +145,7 @@ class NoDataDB:
         Returns:
             tuple[list]: _description_
         """
+        self.logger.info("pull nodata dts")
         if (
             ('{}_eod'.format(ticker) in self.exist_nodata_table_names)
             and ('{}_intra'.format(ticker) in self.exist_nodata_table_names)
@@ -153,9 +154,10 @@ class NoDataDB:
             date_rows = self.cur.fetchall()
             ts_rows = self.cur.execute("SELECT date_time FROM {}_intra".format(ticker))
             ts_rows = self.cur.fetchall()
+            self.logger.info("- pull success: {}(dates) {}(tss)".format(len(date_rows), len(ts_rows)))
             return [x[0] for x in date_rows], [x[0] for x in ts_rows]
         else:
-            self.logger.error('\'{}\' not in nodata db'.format(ticker))
+            self.logger.error('- pull fail: \'{}\' not in nodata db'.format(ticker))
             raise ValueError('\'{}\' not in nodata db'.format(ticker))
 
     def _nodata_table_names(self):

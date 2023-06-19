@@ -87,6 +87,9 @@ class DBUpdater(
         
         # construct trading dts
         trading_dates, trading_timestamps = self.all_trading_dts(start_date, end_date)
+        # ipo dates
+        ipo_dates = self.pull_ipo_dates(self.tickers)
+        
         # init info
         init_string = """
             * init update database
@@ -135,9 +138,17 @@ class DBUpdater(
             # by this time, we will have all dt and ticker table types in place.
             # ----------------------------------------------------
 
+            # update ticker start date
+            diff = dt.datetime.strptime(ipo_dates[ticker], '%Y-%m-%d')\
+                   - dt.datetime.strptime(start_date, '%Y-%m-%d')
+            if (diff.days > 0):
+                tkl_start_date = ipo_dates[ticker]
+            else:
+                tkl_start_date = start_date
+            
             # pull dates & tss from db
             exist_dates, exist_timestamps = self.pull_tkl_dts(
-                ticker, start_date, end_date,
+                ticker, tkl_start_date, end_date,
                 trading_timestamps[0], trading_timestamps[-1],
             )
 
@@ -159,7 +170,7 @@ class DBUpdater(
             if (missing_trading_dates):
                 # request eod from api
                 is_success_eod_request, eod_json = self.request_eod(
-                    ticker, self.exchange, start_date,
+                    ticker, self.exchange, tkl_start_date,
                     end_date
                 )
                 # check if resp valid
@@ -180,7 +191,7 @@ class DBUpdater(
                 intra_json
                 # construct timestamps for periods within request start and end date
                 timestamp_periods = self.timestamp_periods(
-                    max_days_period=self.max_days, start_date=start_date, end_date=end_date,
+                    max_days_period=self.max_days, start_date=tkl_start_date, end_date=end_date,
                 )
                 is_intra_error_breaks = False
                 for start_ts, end_ts in timestamp_periods:
@@ -232,7 +243,7 @@ class DBUpdater(
             
             # pull dates & tss from db
             exist_dates, exist_timestamps = self.pull_tkl_dts(
-                ticker, start_date, end_date,
+                ticker, tkl_start_date, end_date,
                 trading_timestamps[0], trading_timestamps[-1],
             )
             

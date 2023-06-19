@@ -55,7 +55,7 @@ class EodApiRequestHandler:
                 from_=start_date, to=end_date,
             )
             if (not eod_json):
-                return False, ['HTTP exception raised']     # ???
+                return False, ['HTTP exception raised']     # ??? NOTED
             return True, eod_json
         except(HTTPError):
             return False, ['HTTP exception raised']
