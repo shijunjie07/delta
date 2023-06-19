@@ -8,7 +8,7 @@ import pandas as pd
 import sqlite3
 import logging
 
-class GetData():
+class GetData:
     
     def __init__(self, logger:logging.Logger, DB_PATH:str):
         self.logger = logger
@@ -75,7 +75,7 @@ class GetData():
         ...
 
 
-class LoadData():
+class LoadData:
     
     def __init__(self, logger:logging.Logger, DB_PATH:str):
         self.logger = logger
