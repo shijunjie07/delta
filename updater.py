@@ -138,18 +138,30 @@ class DBUpdater(
             # by this time, we will have all dt and ticker table types in place.
             # ----------------------------------------------------
 
-            # update ticker start date
+            # check ticker start date
+            logger.info("check ticker start date")
             diff = dt.datetime.strptime(ipo_dates[ticker], '%Y-%m-%d')\
                    - dt.datetime.strptime(start_date, '%Y-%m-%d')
             if (diff.days > 0):
                 tkl_start_date = ipo_dates[ticker]
+                # update trading dts
+                if (tkl_start_date in trading_dates):
+                    tkl_trading_dates = trading_dates[trading_dates.index(tkl_start_date):]
+                    start_ts = self._construct_trading_period_timestamps(tkl_start_date, tkl_start_date)[0]
+                    tkl_trading_timestamps = trading_timestamps[trading_timestamps.index(start_ts):]
+                    logger.info("- adjust ticker start date({}) to its ipo date({})".format(start_date, ipo_dates[ticker]))
+                    logger.info("- adjust trading dts: {}(dates) {}(tss)".format(len(tkl_trading_dates), len(tkl_trading_timestamps)))
+                else:
+                    logger.info("- update period before its ipo date")
+                    continue
             else:
+                logger.info("- no change on start date")
                 tkl_start_date = start_date
-            
+
             # pull dates & tss from db
             exist_dates, exist_timestamps = self.pull_tkl_dts(
                 ticker, tkl_start_date, end_date,
-                trading_timestamps[0], trading_timestamps[-1],
+                tkl_trading_timestamps[0], tkl_trading_timestamps[-1],
             )
 
             # pull nodata dts
@@ -158,7 +170,7 @@ class DBUpdater(
             exist_timestamps.append(nodata_timestamps) 
             # check missing
             missing_trading_dates, missing_timestamps = self.missing_dts(
-                reference_dates=trading_dates, reference_timestamps=trading_timestamps,
+                reference_dates=tkl_trading_dates, reference_timestamps=tkl_trading_timestamps,
                 comparant_dates=exist_dates, comparant_timestamps=exist_timestamps
             )
             
@@ -244,7 +256,7 @@ class DBUpdater(
             # pull dates & tss from db
             exist_dates, exist_timestamps = self.pull_tkl_dts(
                 ticker, tkl_start_date, end_date,
-                trading_timestamps[0], trading_timestamps[-1],
+                tkl_trading_timestamps[0], tkl_trading_timestamps[-1],
             )
             
             # double check missing
@@ -252,7 +264,7 @@ class DBUpdater(
             # push to NODATADB
             # check missing
             missing_trading_dates, missing_timestamps = self.missing_dts(
-                reference_dates=trading_dates, reference_timestamps=trading_timestamps,
+                reference_dates=tkl_trading_dates, reference_timestamps=tkl_trading_timestamps,
                 comparant_dates=exist_dates, comparant_timestamps=exist_timestamps
             )
             # continue if no missing dts
