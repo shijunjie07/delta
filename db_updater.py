@@ -27,7 +27,7 @@ logger = logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class DatabaseUpdate(
+class DBUpdater(
     Utils, DBHandler,
     EodApiRequestHandler,
 ):
@@ -119,7 +119,7 @@ class DatabaseUpdate(
             -> program starts at {} <-
             """.format(
                     start_date, end_date, len(trading_dates), len(trading_timestamps),
-                    len(self.tickers), ', '.join(self.market_caps), ', '.join(self.exchange),
+                    len(self.tickers), ', '.join(self.market_caps), self.exchange,
                     self.DB_PATH, self.API_KEY, self.LOG_PATH, self.TICKER_PATH, self.NO_DATA_DB_PATH,
                     dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 )
@@ -277,5 +277,5 @@ class DatabaseUpdate(
         self._check_save_error_tkls(self.error_tkls)
 
 
-updater = DatabaseUpdate(logger, activate_logger=True)
-updater.update('2021-01-01', '2023-02-02')
+# updater = DBUpdater(logger, activate_logger=True)
+# updater.update('2021-01-01', '2023-02-02')

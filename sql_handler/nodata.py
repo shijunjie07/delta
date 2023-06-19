@@ -33,7 +33,7 @@ class NoDataDB:
         crt_tables = []
         for table_type in self.nodata_table_types:
             table_name = '_'.join([ticker, table_type])
-            if (table_name in self.ticker_table_names):
+            if (table_name in self.exist_nodata_table_names):
                 continue
             else:
                 # append for later action: create table
