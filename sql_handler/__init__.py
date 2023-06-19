@@ -12,7 +12,7 @@ class DBHandler(NoDataDB, TickerDB):
     
     def __init__(self, logger:logging.Logger, DB_PATH:str,
                  NO_DATA_DB_PATH:str):
-        """init all db handler class
+        """DBHandler class
         
         Args:
             logger (logging.Logger): _description_

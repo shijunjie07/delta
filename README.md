@@ -8,6 +8,11 @@ Delta is a useful tool box for EODHISTORICALDATA.com users to ...
 - push and pull from database
 - ✨Magic ✨
 
+## one-liner quick start
+```python
+DatabaseUpdate(logger, True).update("2021-01-01", "2023-06-20")
+```
+
 ## Features
 
 - Import a HTML file and watch it magically convert to Markdown

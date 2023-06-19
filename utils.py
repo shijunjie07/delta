@@ -4,6 +4,7 @@
 # Fri 9 Jun 2023
 # ---------------------------------
 
+import os
 import re
 import pytz
 import logging
@@ -246,3 +247,49 @@ class Utils:
             int(pd.Timestamp("{} 20:00:00".format(end_date), tz=est).timestamp())    # after-hour
         ]
         
+    def _check_save_error_tkls(self, error_tkls:list[str]):
+        """choose to save error tickers
+
+        Args:
+            error_tkls (list[str]): tickers encountered error
+        """
+
+        save_error_tickers_info = "Do you want to save error tickers to a .csv file?\nYes or No(Y/N): "
+        print(save_error_tickers_info)
+        is_loop = True
+        # check input
+        while (is_loop):
+            is_save_error_tkls = input().lower()
+            if (is_save_error_tkls == "y"):
+                file_path = self._ask_4_path()
+                pd.DataFrame(columns=['ticker'], data=np.array(error_tkls)).to_csv(file_path)
+                self.logger.info('{}{}'.format(save_error_tickers_info, is_save_error_tkls))
+                self.logger.info('error tickers saved to \'{}\''.format(file_path))
+                print('error tickers saved to \'{}\''.format(file_path))
+                is_loop = False
+            elif (is_save_error_tkls == "n"):
+                self.logger.info('{}{}'.format(save_error_tickers_info, is_save_error_tkls))
+                is_loop = False
+            else:
+                continue
+
+    def _ask_4_path(self) -> str:
+        """ask file path to store error tickers
+
+        Returns:
+            str: file path
+            
+        """
+        ask_4_path_info = "Plase enter full file path(.csv): "
+        is_loop = True
+        
+        while (is_loop):
+            file_path = input(ask_4_path_info)
+            dir_path = os.path.dirname(file_path)
+
+            # check valid path
+            if (os.path.isdir(dir_path)):
+                is_loop = False
+                return file_path
+            else:
+                print("Directory path is invalid")

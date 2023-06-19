@@ -19,7 +19,7 @@ from delta.request_handler import EodApiRequestHandler
 
 
 # Configure the logger
-date_now = dt.datetime.now().strftime("%Y-%m-%d_%H-%M")
+date_now = dt.datetime.now().strftime("%Y-%m-%dT%H-%M")
 logger_file_path = '{}/deltaLog_{}.log'.format(os.environ['LOG_PATH'], date_now)
 logger = logging.basicConfig(
     filename=logger_file_path,
@@ -41,10 +41,18 @@ class DatabaseUpdate(
         eodApiRequestHandler (_type_): _description_
     """
     
-    def __init__(self, logger:logging.Logger, activate_logger:bool=True):
+    def __init__(
+        self, logger:logging.Logger, activate_logger:bool=True,
+        tickers:list[str]=None,
+    ):
+        """init DatabaseUpdate
+
+        Args:
+            logger (logging.Logger): _description_
+            activate_logger (bool, optional): _description_. Defaults to True.
+        """
         self.logger = logger    # logger
-        # determine if activate logger
-        self.activate_logger = activate_logger
+        self.activate_logger = activate_logger  # determine if activate logger
         if (self.activate_logger):
             self.logger.setLevel(logging.INFO)
         else:
@@ -54,13 +62,7 @@ class DatabaseUpdate(
         self.DB_PATH = os.environ['DB_PATH']
         self.API_KEY = os.environ['API_KEY']
         self.LOG_PATH = os.environ['LOG_PATH']
-        self.TICKER_PATH = os.environ['TICKER_PATH']
         self.NO_DATA_DB_PATH = os.environ['NO_DATA_DB_PATH']
-        
-        # init classes
-        Utils.__init__(self, self.logger)
-        DBHandler.__init__(self, self.logger, self.DB_PATH, self.NO_DATA_DB_PATH)
-        EodApiRequestHandler.__init__(self, self.API_KEY)
         
         self.market_caps = [        # market caps to pull tickers
             'nano',
@@ -70,15 +72,27 @@ class DatabaseUpdate(
             'large',
             'mega',
         ]
-        self.exchange = 'us'     # exchange code
-        self.tickers = self.get_mrkcap_tkls(self.TICKER_PATH, self.market_caps)   # tickers to update
         
+        if (not tickers):
+            self.TICKER_PATH = os.environ['TICKER_PATH']
+            self.tickers = self.get_mrkcap_tkls(self.TICKER_PATH, self.market_caps)   # tickers to update
+        else:
+            self.TICKER_PATH = None
+            self.tickers = tickers
+
+        # init classes
+        Utils.__init__(self, self.logger)
+        DBHandler.__init__(self, self.logger, self.DB_PATH, self.NO_DATA_DB_PATH)
+        EodApiRequestHandler.__init__(self, self.API_KEY)
+
+        self.exchange = 'us'     # exchange code
+
         self.error_tkls = []       # list of tickers encountered error
         self.max_days = 118     # maximum periods between ‘from’ and ‘to’ for 1 minute intra data
 
     # main func
     def update(self, start_date:str, end_date:str):
-        """_summary_
+        """Update
 
         Args:
             start_date (str): "%Y-%m-%d"
@@ -252,10 +266,17 @@ class DatabaseUpdate(
             else:
                 # push no data dts
                 self.push_nodata_dts(exist_dates, missing_trading_dates, missing_timestamps)
-
             
             # move to next ticker
 
+        # finishing update
+        update_complete_info = "Complete {} tickers update, {} fail to update.".format(len(self.tickers)-len(self.error_tkls), len(self.error_tkls))
+        self.logger.info(update_complete_info)
+        print(update_complete_info)
         
+        # choose to save error tickers
+        self._check_save_error_tkls(self.error_tkls)
+
+
 updater = DatabaseUpdate(logger, activate_logger=True)
 updater.update('2021-01-01', '2023-02-02')
