@@ -17,7 +17,6 @@ from delta.sql_handler import DBHandler
 from delta.request_handler import EodApiRequestHandler
 
 
-
 # Configure the logger
 date_now = dt.datetime.now().strftime("%Y-%m-%dT%H-%M")
 logger_file_path = '{}/deltaLog_{}.log'.format(os.environ['LOG_PATH'], date_now)
