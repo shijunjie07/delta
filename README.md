@@ -10,7 +10,7 @@ Delta is a useful tool box for EODHISTORICALDATA.com users to ...
 
 ## one-liner quick start
 ```python
-DatabaseUpdate(logger, True).update("2021-01-01", "2023-06-20")
+DatabaseUpdate(logger, activate_logger=True).update("2021-01-01", "2023-06-20")
 ```
 
 ## Features
