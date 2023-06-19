@@ -153,7 +153,6 @@ class NoDataDB:
             date_rows = self.cur.fetchall()
             ts_rows = self.cur.execute("SELECT date_time FROM {}_intra".format(ticker))
             ts_rows = self.cur.fetchall()
-            print(len(date_rows), len(ts_rows))
             return [x[0] for x in date_rows], [x[0] for x in ts_rows]
         else:
             self.logger.error('\'{}\' not in nodata db'.format(ticker))
