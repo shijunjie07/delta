@@ -1,6 +1,9 @@
 # DELTA
-## [DEV] A tool box for stock market sql database and market data requests from API (EODHISTORICALDATA, etc...)
+## A tool box for stock market sql database and market data requests from API (EODHISTORICALDATA, etc...)
 
+[![N|Solid](https://cldup.com/dTxpPi9lDf.thumb.png)](https://nodesource.com/products/nsolid)
+
+[![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://travis-ci.org/joemccann/dillinger)
 
 Delta is a useful tool box for EODHISTORICALDATA.com users to ...
 
@@ -10,7 +13,21 @@ Delta is a useful tool box for EODHISTORICALDATA.com users to ...
 
 ## one-liner quick start
 ```python
-DatabaseUpdate(logger, activate_logger=True).update("2021-01-01", "2023-06-20")
+DatabaseUpdate(logger, True).update("2021-01-01", "2023-06-20")
+```
+API_KEY
+LOG_PATH
+TICKER_PATH
+NO_DATA_DB_PATH
+
+## set env vars
+For the program to run in the first place, five environment variables should be set in advance.
+```
+conda env config set vars DB_PATH=/path/to/your/.db                  # OHLCV database
+conda env config set vars API_KEY="{YOUR API KEY}"                   # eodhistoricaldata api
+conda env config set vars LOG_PATH=/path/to/your/log/dir/            # log directory
+conda env config set vars TICKER_PATH=/path/to/your/ticker/dir/      # ticker directory
+conda env config set vars NO_DATA_DB_PATH=/path/to/your/.db          # nodata database
 ```
 
 ## Features
