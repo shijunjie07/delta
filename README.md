@@ -1,10 +1,6 @@
 # DELTA
 ## A tool box for stock market sql database and market data requests from API (EODHISTORICALDATA, etc...)
 
-[![N|Solid](https://cldup.com/dTxpPi9lDf.thumb.png)](https://nodesource.com/products/nsolid)
-
-[![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://travis-ci.org/joemccann/dillinger)
-
 Delta is a useful tool box for EODHISTORICALDATA.com users to ...
 
 - request from api
@@ -12,13 +8,10 @@ Delta is a useful tool box for EODHISTORICALDATA.com users to ...
 - ✨Magic ✨
 
 ## one-liner quick start
+
 ```python
 DatabaseUpdate(logger, True).update("2021-01-01", "2023-06-20")
 ```
-API_KEY
-LOG_PATH
-TICKER_PATH
-NO_DATA_DB_PATH
 
 ## set env vars
 For the program to run in the first place, five environment variables should be set in advance.
