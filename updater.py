@@ -48,6 +48,7 @@ class DBUpdater(
         self.DB_PATH = os.environ['DB_PATH']
         self.API_KEY = os.environ['API_KEY']
         self.LOG_PATH = os.environ['LOG_PATH']
+        self.DATA_DB_PATH = os.environ['DATA_DB_PATH']
         self.NO_DATA_DB_PATH = os.environ['NO_DATA_DB_PATH']
         
         self.market_caps = [        # market caps to pull tickers
@@ -129,8 +130,8 @@ class DBUpdater(
             is_tkl_table_exists, crt_tkl_tables = self.is_tkl_tables_exist(ticker)
             # if ticker table not exists, then create table 
             if (not is_tkl_table_exists):
-                self.crt_tkl_tables(ticker, crt_tkl_tables)        # creat tables
-            # chcek nodata dt table exists, if not create table
+                self.crt_tkl_tables(ticker, crt_tkl_tables)        # create tables
+            # check nodata dt table exists, if not create table
             is_nodata_table_exists = self.is_nodata_table_exists(ticker)
             if (not is_nodata_table_exists):
                 self.crt_nodata_table(ticker)

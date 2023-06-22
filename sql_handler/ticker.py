@@ -8,6 +8,9 @@ import pandas as pd
 import sqlite3
 import logging
 
+# import local
+from delta.sql_handler.nodata import NoDataDB
+
 class GetData:
     
     def __init__(self, logger:logging.Logger, DB_PATH:str):
@@ -15,8 +18,7 @@ class GetData:
         self.DB_PATH = DB_PATH
         self.con = sqlite3.connect(self.DB_PATH, check_same_thread=False)
         self.cur = self.con.cursor()
-
-
+        
     def pull_tkl_dts(
         self, ticker:str, start_date:str,
         end_date:str, start_ts:int, end_ts:int
@@ -79,43 +81,25 @@ class GetData:
         """
         ...
 
-class LoadData:
+class LoadData(NoDataDB):
+    # TODO:
+    # 1. add a check push dt function 
+    #    to monitor nodata dt input
+    #    if yes, rm nodata dt from nodata db
+    #    else, push with out any changes
+    # 2. 
+    # 3. 
+    # 4. 
     
-    def __init__(self, logger:logging.Logger, DB_PATH:str):
+    def __init__(self, logger:logging.Logger, DB_PATH:str, NO_DATA_DB_PATH:str):
         self.logger = logger
         self.DB_PATH = DB_PATH
         self.con = sqlite3.connect(self.DB_PATH, check_same_thread=False)
         self.cur = self.con.cursor()
 
-    def push_intra(self, ticker:str, df:pd.DataFrame) -> bool:
-        """
-        Pushes the data from a pandas DataFrame into the corresponding intra-day table in the database.
+        # init NoDataDB
+        NoDataDB.__init__(self, self.logger, NO_DATA_DB_PATH)
 
-        Args:
-            ticker (str): The ticker symbol of the stock or financial instrument.
-            df (pd.DataFrame): The DataFrame containing the data to be pushed.
-
-        Returns:
-            bool: True if the data is successfully pushed, False otherwise.
-        """
-        self.logger.info('prepare for intra push')
-
-        # format column name
-        is_success_format, df = self._format_column_names(df, 'intra')
-        if (not is_success_format):
-            self.logger.info('* fail to push intra')
-            return False
-        
-        # push data
-        try:
-            df.to_sql('{}_intra'.format(ticker), self.con, if_exists='append', index=False)
-            self.con.commit()
-            self.logger.info('success push intra')
-            return True
-        except Exception as e:
-            self.logger.info('error occurred while pushing intra, {}'.format(ticker, e))
-            return False
-        
     def push_eod(self, ticker: str, df: pd.DataFrame) -> bool:
         """
         Pushes the data from a pandas DataFrame into the corresponding end-of-day (EOD) table in the database.
@@ -137,11 +121,64 @@ class LoadData:
         # push data
         try:
             df.to_sql('{}_eod'.format(ticker), self.con, if_exists='append', index=False)
+            
+            # check nodata timestamps
+            is_success_rm = self._rm_nodata_dts(ticker, df['date_day'], [])
+            if (not is_success_rm):
+                self.logger.info('error occurred while preparing to push eod'.format(ticker))
+                self.logger.info('- exception on \'_rm_nodata_dts\'')
+                self.logger.info('- canceled commit')
+                return False
+            
+            # commit if no exceptions
             self.con.commit()
             self.logger.info('success push eod')
             return True
         except Exception as e:
-            self.logger.info('error occurred while pushing eod, {}'.format(ticker, e))
+            self.logger.info('error occurred while pushing \'{}\' eod'.format(ticker))
+            self.logger.info('- {}'.format(e))
+            return False
+
+    def push_intra(self, ticker:str, df:pd.DataFrame) -> bool:
+        """
+        Pushes the data from a pandas DataFrame into the corresponding intra-day table in the database.
+
+        Args:
+            ticker (str): The ticker symbol of the stock or financial instrument.
+            df (pd.DataFrame): The DataFrame containing the data to be pushed.
+
+        Returns:
+            bool: True if the data is successfully pushed, False otherwise.
+        """
+        self.logger.info('prepare for intra push')
+
+        # format column name
+        is_success_format, df = self._format_column_names(df, 'intra')
+        if (not is_success_format):
+            self.logger.info('* fail to push intra')
+            return False
+        
+        
+        # push data
+        try:
+            # push
+            df.to_sql('{}_intra'.format(ticker), self.con, if_exists='append', index=False)
+            
+            # check nodata timestamps
+            is_success_rm = self._rm_nodata_dts(ticker, [], df['date_time'])
+            if (not is_success_rm):
+                self.logger.info('error occurred while preparing to push intra'.format(ticker))
+                self.logger.info('- exception on \'_rm_nodata_dts\'')
+                self.logger.info('- canceled commit')
+                return False
+            
+            # commit if no exceptions
+            self.con.commit()
+            self.logger.info('success push intra')
+            return True
+        except Exception as e:
+            self.logger.info('error occurred while pushing \'{}\' intra'.format(ticker))
+            self.logger.info('- {}'.format(e))
             return False
 
     def _format_column_names(
@@ -198,10 +235,31 @@ class LoadData:
         # Return the DataFrame with the formatted column names
         return True, formatted_df 
 
+    def _rm_nodata_dts(self, ticker:str, dates:list[str], timestamps:list[int]):
+        """remove nodata dts
+
+        Args:
+            ticker (str): _description_
+            dates (list[str]): _description_
+            timestamps (list[int]): _description_
+            
+        """
+        self.logger.info("prepare to update nodata dts")
+        nodata_dates, nodata_timestamps = self.pull_nodata_dts(ticker)
+        
+        rep_dates = list(set(dates) & set(nodata_dates))
+        rep_timestamps = list(set(timestamps) & set(nodata_timestamps))
+        
+        # remove from nodata db
+        is_success_rm = self.rm_dts(ticker, rep_dates, rep_timestamps)
+
+        return is_success_rm
+
+        
 
 class TickerDB(GetData, LoadData):
     
-    def __init__(self, logger:logging.Logger, DB_PATH:str):
+    def __init__(self, logger:logging.Logger, DB_PATH:str, NO_DATA_DB_PATH:str):
         self.logger = logger
         self.DB_PATH = DB_PATH
         self.con = sqlite3.connect(self.DB_PATH, check_same_thread=False)
@@ -211,7 +269,7 @@ class TickerDB(GetData, LoadData):
         self.table_types = ['eod', 'intra']
         
         GetData.__init__(self, self.logger, self.DB_PATH)
-        LoadData.__init__(self, self.logger, self.DB_PATH)
+        LoadData.__init__(self, self.logger, self.DB_PATH, NO_DATA_DB_PATH)
 
     def get_mrkcap_tkls(
         self, ticker_path:str, market_caps:list[str]

@@ -143,7 +143,7 @@ class NoDataDB:
             ticker (str): _description_
 
         Returns:
-            tuple[list]: _description_
+            tuple[list]: dates, timestamps
         """
         self.logger.info("pull nodata dts")
         if (
@@ -159,6 +159,33 @@ class NoDataDB:
         else:
             self.logger.error('- pull fail: \'{}\' not in nodata db'.format(ticker))
             raise ValueError('\'{}\' not in nodata db'.format(ticker))
+
+    def rm_dts(self, ticker:str, dates:list[str], timestamps:list[int]) -> bool:
+        """remove dts
+
+        Args:
+            ticker (str): _description_
+            dates (list[str]): _description_
+            timestamps (list[int]): _description_
+
+        Returns:
+            bool: is success rm
+        """
+        self.logger.info("remove dts: {}(dates) {}(tss)".format(len(dates), len(timestamps)))
+        
+        # rm query
+        try:
+            ...
+        except:
+            ...
+            self.logger.info("unable to remove dts: {}(dates) {}(tss)".format(len(dates), len(timestamps)))
+            return False
+        
+        # 
+        self.logger.info("remove dts success: {}(dates) {}(tss)".format(len(dates), len(timestamps)))
+        
+        return True
+        
 
     def _nodata_table_names(self):
         """

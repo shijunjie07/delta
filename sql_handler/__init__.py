@@ -8,7 +8,7 @@ from delta.sql_handler.nodata import NoDataDB
 from delta.sql_handler.ticker import TickerDB
 import logging
 
-class DBHandler(NoDataDB, TickerDB):
+class DBHandler(TickerDB, NoDataDB):
     
     def __init__(self, logger:logging.Logger, DB_PATH:str,
                  NO_DATA_DB_PATH:str):
@@ -24,5 +24,5 @@ class DBHandler(NoDataDB, TickerDB):
         self.NO_DATA_DB_PATH = NO_DATA_DB_PATH
         
         # init
-        TickerDB.__init__(self, self.logger, self.DB_PATH)
+        TickerDB.__init__(self, self.logger, self.DB_PATH, self.NO_DATA_DB_PATH)
         NoDataDB.__init__(self, self.logger, self.NO_DATA_DB_PATH)
