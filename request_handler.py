@@ -4,12 +4,13 @@
 # Sat 3 Jun 2023
 # -----------------------
 
+import logging
 from eod import EodHistoricalData
 from urllib3.exceptions import HTTPError
 
 class EodApiRequestHandler:
     
-    def __init__(self, api_key:str, call_limit=100000):
+    def __init__(self, logger:logging.Logger, api_key:str, call_limit=100000):
         """_summary_
 
         Args:
@@ -18,6 +19,7 @@ class EodApiRequestHandler:
         """
         self.api_key = api_key
         self.api_client = EodHistoricalData(self.api_key)
+        self.logger = logger
         
         # api calls per request
         self.eod_calls_per_reqeust = 1      # end-of-day
@@ -46,6 +48,7 @@ class EodApiRequestHandler:
         Returns:
             tuple[bool, list]: _description_
         """
+        self.logger.info("fetching eod data between {} and {}".format(start_date, end_date))
         self.call_used += self.eod_calls_per_reqeust
         try:
             eod_json = []
@@ -55,9 +58,12 @@ class EodApiRequestHandler:
                 from_=start_date, to=end_date,
             )
             if (not eod_json):
-                return False, ['HTTP exception raised']     # ??? NOTED
+                self.logger.info("- empty returned")
+                return False, ['empty returned']     # ??? NOTED
+            self.logger.info("- {} data point returned".format(len(eod_json)))
             return True, eod_json
         except(HTTPError):
+            self.logger.info("- \'HTTP exception raised\'")
             return False, ['HTTP exception raised']
 
     def request_intra(
@@ -77,6 +83,7 @@ class EodApiRequestHandler:
         Returns:
             tuple[bool, list]: _description_
         """
+        self.logger.info("fetching intra data between {} and {}".format(start_ts, end_ts))
         self.call_used += self.intra_calls_per_reqeust
         try:
             intra_json = self.api_client.get_prices_intraday(
@@ -84,9 +91,12 @@ class EodApiRequestHandler:
                 from_=start_ts, to=end_ts
             )
             if (not intra_json):
-                return False, ['HTTP exception raised']     # ???
+                self.logger.info("- empty returned")
+                return False, ['empty returned']     # ???
+            self.logger.info("- {} data point returned".format(len(intra_json)))
             return True, intra_json
         except:
+            self.logger.info("- \'HTTP exception raised\'")
             return False, ['HTTP exception raised']
 
     def request_tickers(self) -> list[str]:
@@ -103,4 +113,5 @@ class EodApiRequestHandler:
         Returns:
             int: _description_
         """
-        ...
+        return 10000
+        

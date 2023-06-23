@@ -134,7 +134,7 @@ class DBUpdater(
             # check nodata dt table exists, if not create table
             is_nodata_table_exists = self.is_nodata_table_exists(ticker)
             if (not is_nodata_table_exists):
-                self.crt_nodata_table(ticker)
+                self.crt_nodata_table(ticker, self.table_types)
                 
             # by this time, we will have all dt and ticker table types in place.
             # ----------------------------------------------------
@@ -238,13 +238,9 @@ class DBUpdater(
             df_eod = pd.DataFrame(eod_json)
             df_intra = pd.DataFrame(intra_json)
             
-            # filter out non missing data
-            df_eod = df_eod[df_eod['date'] == missing_trading_dates].drop(
-                columns=['adjusted_close'], axis=1,
-            )
-            df_intra = df_intra[df_intra['timestamp'] == missing_trading_dates].drop(
-                columns=['gmtoffset', 'datetime'], axis=1,
-            )
+            # filter out non-missing dts and un-want columns
+            df_eod = df_eod[df_eod['date'] == missing_trading_dates]
+            df_intra = df_intra[df_intra['timestamp'] == missing_trading_dates]
             
             # push eod & intra
             is_success_eod_push = self.push_eod(ticker, df_eod)

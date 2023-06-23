@@ -66,7 +66,7 @@ class NoDataDB:
                 date_time DATETIME UNIQUE);".format(ticker))
             self.con.commit()
     
-        logging_info = '- created {} nodata tables'.format(', '.join(table_types))
+        logging_info = 'created {} nodata tables'.format(', '.join(table_types))
         self.logger.info(logging_info)
 
     def push_nodata_dts(

@@ -35,7 +35,11 @@ class GetData:
         Returns:
             tuple[list[str], list[int]]: _description_
         """
-    
+
+        self.logger.info("pull ticker dts: \'{}\'".format(ticker))
+        self.logger.info("- {} {}; {} {}".format(
+            start_date, end_date, start_ts, end_ts
+        ))
         dt_obj_index = 0
         
         # queries
@@ -66,7 +70,7 @@ class GetData:
         else:
             timestamps = []
 
-        self.logger.info('existing dts: {}(date) {}(tss)'.format(len(dates), len(timestamps)))
+        self.logger.info('- existing dts: {}(date) {}(tss)'.format(len(dates), len(timestamps)))
 
         return dates, timestamps
     
@@ -182,7 +186,7 @@ class LoadData(NoDataDB):
             return False
 
     def _format_column_names(
-        self, df: pd.DataFrame, table_type:str
+        self, df: pd.DataFrame, table_type:str,
     ) -> tuple[bool, pd.DataFrame]:
         """Formats the column names of a DataFrame.
 
@@ -197,7 +201,6 @@ class LoadData(NoDataDB):
         self.logger.info('- start to format columns for {} push'.format(table_type))
         # Create a new DataFrame to store the formatted column names
         formatted_df = pd.DataFrame()
-        
         # check table types
         if (table_type == 'eod'):
             # Mapping of original eod column names to formatted column names
@@ -209,6 +212,7 @@ class LoadData(NoDataDB):
                 'close': 'd_close',
                 'volume': 'd_volume',
             }
+            exclude_cols = ['adjusted_close']
         elif (table_type == 'intra'):
             # Mapping of original intra column names to formatted column names
             columns = {
@@ -219,9 +223,13 @@ class LoadData(NoDataDB):
                 'close': 'm_close',
                 'volume': 'm_volume',
             }
+            exclude_cols = ['gmtoffset', 'datetime']
         else:
             self.logger.info('- fail to format, wrong table type: \'{}\''.format(table_type))
             return False, formatted_df
+        
+        # filter out un-want columns
+        df = df.drop(columns=exclude_cols, axis=1)
         
         # Check if the keys of columns match the column names of the DataFrame
         if set(columns.keys()) != set(df.columns):
@@ -338,7 +346,7 @@ class TickerDB(GetData, LoadData):
                 date_time DATETIME UNIQUE, m_open FLOAT, m_high FLOAT, m_low FLOAT, m_close FLOAT, m_volume BIGINT);")
             self.con.commit()
 
-        logging_info = '- created {} tables'.format(', '.join(table_types))
+        logging_info = 'created {} tables'.format(', '.join(table_types))
         self.logger.info(logging_info)
 
     def _ticker_table_names(self):
