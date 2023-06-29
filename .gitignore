@@ -166,3 +166,4 @@ environment.yml
 .conda/
 test/
 main.py
+readme_template.md
