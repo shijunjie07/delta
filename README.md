@@ -1,4 +1,32 @@
 # DELTA
+
+## ToDo: DBUpdater
+
+- 
+- threading for the 'DBUpdater'
+
+## ToDo: DBHandler
+
+- write pull_eod()
+- write pull_intra()
+- write pull_ipo_dates()
+
+## ToDo: EodApiRequestHandler
+
+- write request_tickers()
+- write and implement _api_counts()
+- optimise intra request to achive minimum api calls
+
+## ToDo: Utils
+- implement a function to check if start date before ipo date on db
+
+## ToDo: Readme
+
+- ...
+
+
+
+-------------------------------
 ## A tool box for stock market sql database and market data requests from API (EODHISTORICALDATA, etc...)
 
 Delta is a useful tool box for EODHISTORICALDATA.com users to ...
