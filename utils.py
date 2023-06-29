@@ -292,3 +292,14 @@ class Utils:
                 return file_path
             else:
                 print("Directory path is invalid")
+
+    def file_exists(file_path:str) -> bool:
+        """check if file path exists
+
+        Args:
+            file_path (str): _description_
+
+        Returns:
+            bool: _description_
+        """
+        return os.path.isfile(file_path)

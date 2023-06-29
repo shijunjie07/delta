@@ -5,6 +5,7 @@
 # -----------------------
 
 import logging
+import pandas as pd
 from eod import EodHistoricalData
 from urllib3.exceptions import HTTPError
 
@@ -58,9 +59,9 @@ class EodApiRequestHandler:
                 from_=start_date, to=end_date,
             )
             if (not eod_json):
-                self.logger.info("- empty returned")
-                return False, ['empty returned']     # ??? NOTED
-            self.logger.info("- {} data point returned".format(len(eod_json)))
+                self.logger.info("- empty return")
+                return False, ['empty return']     # ??? NOTED
+            self.logger.info("- {} data point return".format(len(eod_json)))
             return True, eod_json
         except(HTTPError):
             self.logger.info("- \'HTTP exception raised\'")
@@ -87,26 +88,70 @@ class EodApiRequestHandler:
         self.call_used += self.intra_calls_per_reqeust
         try:
             intra_json = self.api_client.get_prices_intraday(
-                '{}'.format(ticker, exchange), interval=interval,
+                '{}.{}'.format(ticker, exchange), interval=interval,
                 from_=start_ts, to=end_ts
             )
             if (not intra_json):
-                self.logger.info("- empty returned")
-                return False, ['empty returned']     # ???
-            self.logger.info("- {} data point returned".format(len(intra_json)))
+                self.logger.info("- empty return")
+                return False, ['empty return']     # ???
+            self.logger.info("- {} data point return".format(len(intra_json)))
             return True, intra_json
         except:
             self.logger.info("- \'HTTP exception raised\'")
             return False, ['HTTP exception raised']
 
-    def request_tickers(self) -> list[str]:
-        """request all US exchange traded tickers
+    def request_fundamentals(self, ticker:str, exchange:str) -> tuple[bool, dict]:
+        """request fundamental data
+        
+
+        Args:
+            ticker (str): _description_
+            exchange (str): exhchange code
 
         Returns:
-            list[str]: tickers
+            tuple[bool, dict]: return dict
         """
-        ...
+        symbol = "{}.{}".format(ticker.upper(), exchange.upper())
+        self.logger.info("fetching fundamentals of {}".format(symbol))
+        self.call_used += self.fund_calls_per_rquest
+        try:
+            fund = self.api_client.get_fundamental_equity(symbol)
+            if (not fund):
+                self.logger.info("- empty return")
+                return False, {'empty return': ''}
+            self.logger.info("- request success")
+            return True, fund
+        except:
+            self.logger.info("- \'HTTP exception raised\'")
+            return False, {'HTTP exception raised': ''}
 
+    def request_tickers(self, exchange:str) -> tuple[bool, dict]:
+        """request exchange traded tickers
+
+        Args:
+            exchange (str): exchange code
+
+        Returns:
+            tuple[bool, dict]: exchange tickers wt info
+        """
+        exchange = exchange.upper()
+        self.logger.info("fetching {} exchange tickers".format(exchange))
+        self.call_used += self.fund_calls_per_rquest
+        try:
+            exg_symbols = self.api_client.get_exchange_symbols(exchange)
+            if (not exg_symbols):
+                self.logger.info("- empty return")
+                return False, {'empty return': ''}
+            self.logger.info("- request success")
+            self.logger.info("- parsing exchange symbols to dict")
+            exg_symbols = pd.DataFrame(exg_symbols).to_dict("list")
+            self.logger.info("- parse done")
+            return True, exg_symbols
+        except:
+            self.logger.info("- \'HTTP exception raised\'")
+            return False, {'HTTP exception raised': ''}
+        
+    # ?????
     def _call_counts(self) -> int:
         """request call count from eodhistoricaldata.com api
 

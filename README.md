@@ -28,7 +28,6 @@
 
 ## ToDo: Readme
 
-- QUICKSTART: onliner update
 - mention ESTERN timezone
 -
 
