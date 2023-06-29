@@ -1,30 +1,36 @@
 # DELTA
 
 ## ToDo: DBUpdater
-
-- 
+ 
 - threading for the 'DBUpdater'
+- implement store ipo dates - refer DBHandler data.db
+-
 
 ## ToDo: DBHandler
 
 - write pull_eod()
 - write pull_intra()
 - write pull_ipo_dates()
+- store ipo dates for all tickers (data.db)
+-
 
 ## ToDo: EodApiRequestHandler
 
 - write request_tickers()
 - write and implement _api_counts()
 - optimise intra request to achive minimum api calls
+- if data return is empty because of no data at that time for the reuqest ticker - HOW TO HANDLER EXCEPTION - WRITE TEST
+- 
 
 ## ToDo: Utils
 - implement a function to check if start date before ipo date on db
+-
 
 ## ToDo: Readme
 
-- ...
-
-
+- QUICKSTART: onliner update
+- mention ESTERN timezone
+-
 
 -------------------------------
 ## A tool box for stock market sql database and market data requests from API (EODHISTORICALDATA, etc...)
