@@ -13,6 +13,7 @@ class NoDataDB:
     def __init__(self, logger:logging.Logger, DB_PATH:str):
         self.logger = logger
         self.NO_DATA_DB_PATH = DB_PATH
+        self.logger.info(":: establish connection with nodata.db ::")
         self.con = sqlite3.connect(self.NO_DATA_DB_PATH, check_same_thread=False)
         self.cur = self.con.cursor()
         self.exist_nodata_table_names = self._nodata_table_names()

@@ -52,12 +52,9 @@ Delta is a useful tool box for EODHISTORICALDATA.com users to ...
 ## set env vars
 For the program to run in the first place, five environment variables should be set in advance.
 ```
-conda env config set vars DB_PATH=/path/to/your/.db                  # OHLCV database
-conda env config set vars NO_DATA_DB_PATH=/path/to/your/.db          # nodata database
+conda env config set vars DATA_DIR_PATH=/path/to/your/data/dir       # data directory
 conda env config set vars API_KEY="{YOUR API KEY}"                   # eodhistoricaldata api
 conda env config set vars LOG_PATH=/path/to/your/log/dir/            # log directory
-conda env config set vars TICKER_PATH=/path/to/your/ticker/dir/      # ticker directory
-conda env config set vars FUND_PAT=/path/to/your/fundamentals/dir/   # fundamentals directory
 ```
 
 # How to use

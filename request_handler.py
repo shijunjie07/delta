@@ -18,9 +18,10 @@ class EodApiRequestHandler:
             api_key (str): _description_
             api_calls (int, optional): _description_. Defaults to 100000.
         """
-        self.api_key = api_key
-        self.api_client = EodHistoricalData(self.api_key)
         self.logger = logger
+        self.api_key = api_key
+        self.logger.info(":: establish connection with EODHISTRICALDATA.com ::")
+        self.api_client = EodHistoricalData(self.api_key)
         
         # api calls per request
         self.eod_calls_per_reqeust = 1      # end-of-day

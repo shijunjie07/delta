@@ -9,23 +9,21 @@ from delta.sql_handler.nodata import NoDataDB
 from delta.sql_handler.ticker import TickerDB
 import logging
 
+db_file_name = 'findata.db'
+nodata_db_file_name = 'nodata.db'
+fund_dir_name = 'fund/'
+
+
 class DBHandler(TickerDB, NoDataDB, FundDB):
     
-    def __init__(self, logger:logging.Logger, DB_PATH:str,
-                 NO_DATA_DB_PATH:str, FUND_PATH:str):
-        """DBHandler class
-        
-        Args:
-            logger (logging.Logger): _description_
-            DB_PATH (str): _description_
-        """
+    def __init__(self, logger:logging.Logger, data_path:str):
         
         self.logger = logger
-        self.DB_PATH = DB_PATH
-        self.NO_DATA_DB_PATH = NO_DATA_DB_PATH
-        self.FUND_PATH = FUND_PATH
+        self.DB_PATH = '{}{}'.format(data_path, db_file_name)
+        self.NO_DATA_DB_PATH = '{}{}'.format(data_path, nodata_db_file_name)
+        self.FUND_DIR_PATH = '{}{}'.format(data_path, fund_dir_name)
 
         # init
         TickerDB.__init__(self, self.logger, self.DB_PATH, self.NO_DATA_DB_PATH)
         NoDataDB.__init__(self, self.logger, self.NO_DATA_DB_PATH)
-        FundDB.__init__(self, self.logger, self.FUND_PATH)
+        FundDB.__init__(self, self.logger, self.FUND_DIR_PATH)

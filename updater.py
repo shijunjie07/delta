@@ -45,12 +45,9 @@ class DBUpdater(
             logger.setLevel(logging.NOTSET)
 
         # init env vars
-        self.DB_PATH = os.environ['DB_PATH']
-        self.API_KEY = os.environ['API_KEY']
-        self.LOG_PATH = os.environ['LOG_PATH']
-        self.DATA_DB_PATH = os.environ['DATA_DB_PATH']
-        self.NO_DATA_DB_PATH = os.environ['NO_DATA_DB_PATH']
-        self.FUND_PATH = os.environ['FUND_PATH']    # dir
+        self.DATA_DIR_PATH = os.environ['DATA_DIR_PATH']    # directiory
+        self.API_KEY = os.environ['API_KEY']                # api key
+        self.LOG_PATH = os.environ['LOG_PATH']              # log path
         
         self.market_caps = [        # market caps to pull tickers
             'nano',
@@ -61,16 +58,17 @@ class DBUpdater(
             'mega',
         ]
         
-        if (not tickers):
-            self.TICKER_PATH = os.environ['TICKER_PATH']
-            self.tickers = self.get_mrkcap_tkls(self.TICKER_PATH, self.market_caps)   # tickers to update
-        else:
-            self.TICKER_PATH = None
-            self.tickers = tickers
+        # # to do:
+        # if (not tickers):
+        #     self.TICKER_PATH = os.environ['TICKER_PATH']
+        #     self.tickers = self.get_mrkcap_tkls(self.TICKER_PATH, self.market_caps)   # tickers to update
+        # else:
+        #     self.TICKER_PATH = None
+        #     self.tickers = tickers
 
         # init classes
         Utils.__init__(self, logger)
-        DBHandler.__init__(self, logger, self.DB_PATH, self.NO_DATA_DB_PATH, self.FUND_PATH)
+        DBHandler.__init__(self, logger, self.DATA_DIR_PATH)
         EodApiRequestHandler.__init__(self, self.API_KEY)
 
         self.exchange = 'us'     # exchange code
@@ -102,19 +100,15 @@ class DBUpdater(
             - ticker count: {}
             - market caps: {}
             - exchanges: {}
-            -> DB_PATH: {}
-            -> API_KEY: {}
+            -> DATA_DIR_PATH: {}
             -> LOG_PATH: {}
-            -> TICKER_PATH: {}
-            -> NO_DATA_DB_PATH: {}
-            -> FUND_PATH: {}
+            -> API_KEY: {}
 
             -> program starts at {} <-
             """.format(
                     start_date, end_date, len(trading_dates), len(trading_timestamps),
                     len(self.tickers), ', '.join(self.market_caps), self.exchange,
-                    self.DB_PATH, self.API_KEY, self.LOG_PATH, self.TICKER_PATH, self.NO_DATA_DB_PATH,
-                    self.FUND_PATH,
+                    self.DATA_DIR_PATH, self.LOG_PATH, self.API_KEY, 
                     dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 )
         

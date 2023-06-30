@@ -13,11 +13,11 @@ from delta.sql_handler.nodata import NoDataDB
 
 class GetData:
     
-    def __init__(self, logger:logging.Logger, DB_PATH:str):
+    def __init__(self, logger:logging.Logger, DB_PATH:str, db_con, db_cur):
         self.logger = logger
         self.DB_PATH = DB_PATH
-        self.con = sqlite3.connect(self.DB_PATH, check_same_thread=False)
-        self.cur = self.con.cursor()
+        self.con = db_con
+        self.cur = db_cur
         
     def pull_tkl_dts(
         self, ticker:str, start_date:str,
@@ -95,11 +95,11 @@ class LoadData(NoDataDB):
     # 3. 
     # 4. 
     
-    def __init__(self, logger:logging.Logger, DB_PATH:str, NO_DATA_DB_PATH:str):
+    def __init__(self, logger:logging.Logger, DB_PATH:str, NO_DATA_DB_PATH:str, db_con, db_cur):
         self.logger = logger
         self.DB_PATH = DB_PATH
-        self.con = sqlite3.connect(self.DB_PATH, check_same_thread=False)
-        self.cur = self.con.cursor()
+        self.con = db_con
+        self.cur = db_cur
 
         # init NoDataDB
         NoDataDB.__init__(self, self.logger, NO_DATA_DB_PATH)
@@ -270,14 +270,15 @@ class TickerDB(GetData, LoadData):
     def __init__(self, logger:logging.Logger, DB_PATH:str, NO_DATA_DB_PATH:str):
         self.logger = logger
         self.DB_PATH = DB_PATH
+        self.logger.info(":: establish connection wtih findata.db ::")
         self.con = sqlite3.connect(self.DB_PATH, check_same_thread=False)
         self.cur = self.con.cursor()
         
         self.exist_ticker_table_names = self._ticker_table_names()
         self.table_types = ['eod', 'intra']
         
-        GetData.__init__(self, self.logger, self.DB_PATH)
-        LoadData.__init__(self, self.logger, self.DB_PATH, NO_DATA_DB_PATH)
+        GetData.__init__(self, self.logger, self.DB_PATH, self.con, self.cur)
+        LoadData.__init__(self, self.logger, self.DB_PATH, NO_DATA_DB_PATH, self.con, self.cur)
 
     def get_mrkcap_tkls(
         self, ticker_path:str, market_caps:list[str]
@@ -291,11 +292,12 @@ class TickerDB(GetData, LoadData):
         Returns:
             list[str]: a list of tickers
         """
-        tickers = []
-        for cap in market_caps:
-                    tickers.extend(list(pd.read_csv(f"{ticker_path}{cap}.csv")["Symbol"]))
-        return [tkl.replace(" ", "") for tkl in tickers if (isinstance(tkl, str))]
-
+        # tickers = []
+        # for cap in market_caps:
+        #             tickers.extend(list(pd.read_csv(f"{ticker_path}{cap}.csv")["Symbol"]))
+        # return [tkl.replace(" ", "") for tkl in tickers if (isinstance(tkl, str))]
+        ...
+        
     def is_tkl_tables_exist(self, ticker:str) -> tuple[bool, list[str]]:
         """check if the input ticker exists in database
 
