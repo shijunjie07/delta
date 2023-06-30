@@ -6,6 +6,7 @@
 
 import pickle
 import logging
+import sqlite3
 from delta.utils import Utils
 
 us_exg_pickle = 'us.pickle'
@@ -15,7 +16,12 @@ class FundDB:
     def __init__(self, logger:logging.Logger, FUND_PATH:str):
         self.logger = logger
         self.FUND_PATH = FUND_PATH  # dir
-        
+        # self.DATA_DB_PATH = '{}data.db'.format(self.FUND_PATH)
+
+        # # sql connection
+        # self.con = sqlite3.connect(self.DATA_DB_PATH)
+        # self.cur = self.con.cursor()
+
         # make file
         self.logger.info("create pickle file in \'{}\'".format(self.FUND_PATH))
         open('{}{}'.format(self.FUND_PATH, us_exg_pickle), 'w').close()
@@ -86,7 +92,7 @@ class FundDB:
         else:
             data_dicts = []
             append_tickers = []
-            # pull necessary ticker dicts
+            # pull ticker dicts
             for data in loaded_data:
                 tkl = data['General']['Code']
                 if tkl in tickers:
@@ -113,4 +119,34 @@ class FundDB:
             tuple[bool, dict[str, str]]: dict[ticker, ipo_date]
         """
         # data['General']['IPODate']
-        ...
+        file_path = '{}{}.pickle'.format(self.FUND_PATH, file_name)
+        self.logger.info("pull ipo dates from \'{}\'".format(file_path))
+        
+        # check valid file path
+        if (not Utils.file_exists(file_path)):
+            self.logger.info('- invalid \'file_path\' \'{}\''.format(file_path))
+            return False, [{}]
+
+        
+        # Retrieving the data dictionaries from the pickle file
+        with open(file_path, 'rb') as pickle_file:
+            loaded_data = pickle.load(pickle_file)
+            self.logger.info("- pulled {} data from file".format(len(loaded_data)))
+
+        data = {}
+        append_tickers = []
+        # pull ticker dicts
+        for data in loaded_data:
+            tkl = data['General']['Code']
+            if tkl in tickers:
+                append_tickers.append(tkl)
+                data['%s' % tkl] = str(data['General']['IPODate'])
+            else:
+                continue
+        not_found_tickers = list(set(tickers) - set(append_tickers))
+
+        self.logger.info("- return {} ticker ipo dates, expected {}, {} not found".format(
+            len(append_tickers)), len(tickers), len(not_found_tickers)
+        )
+            
+        return True, data

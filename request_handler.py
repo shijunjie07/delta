@@ -159,4 +159,3 @@ class EodApiRequestHandler:
             int: _description_
         """
         return 10000
-        
