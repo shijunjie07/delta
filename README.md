@@ -1,5 +1,13 @@
 # DELTA
 
+## Contents
+- [TO DO LIST](#to-do-list)
+- [Introduction](#introduction)
+- [Installation](#set-env-vars)
+- [How to Use](#how-to-use)
+- [...]()
+
+# To DO LIST
 ## ToDo: DBUpdater
  
 - threading for the 'DBUpdater'
@@ -31,6 +39,7 @@
 - mention ESTERN timezone
 -
 
+# Introduction
 -------------------------------
 ## A tool box for stock market sql database and market data requests from API (EODHISTORICALDATA, etc...)
 
@@ -44,15 +53,16 @@ Delta is a useful tool box for EODHISTORICALDATA.com users to ...
 For the program to run in the first place, five environment variables should be set in advance.
 ```
 conda env config set vars DB_PATH=/path/to/your/.db                  # OHLCV database
+conda env config set vars NO_DATA_DB_PATH=/path/to/your/.db          # nodata database
 conda env config set vars API_KEY="{YOUR API KEY}"                   # eodhistoricaldata api
 conda env config set vars LOG_PATH=/path/to/your/log/dir/            # log directory
 conda env config set vars TICKER_PATH=/path/to/your/ticker/dir/      # ticker directory
-conda env config set vars NO_DATA_DB_PATH=/path/to/your/.db          # nodata database
+conda env config set vars FUND_PAT=/path/to/your/fundamentals/dir/   # fundamentals directory
 ```
 
 # How to use
 ## Updater
 ```python
 updater = DatabaseUpdate(activate_logger=True)
-updater.update('2021-01-01', '2023-02-02')
+updater.update('2000-12-07', '2001-10-14')
 ```

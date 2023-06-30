@@ -50,6 +50,7 @@ class DBUpdater(
         self.LOG_PATH = os.environ['LOG_PATH']
         self.DATA_DB_PATH = os.environ['DATA_DB_PATH']
         self.NO_DATA_DB_PATH = os.environ['NO_DATA_DB_PATH']
+        self.FUND_PATH = os.environ['FUND_PATH']    # dir
         
         self.market_caps = [        # market caps to pull tickers
             'nano',
@@ -69,7 +70,7 @@ class DBUpdater(
 
         # init classes
         Utils.__init__(self, logger)
-        DBHandler.__init__(self, logger, self.DB_PATH, self.NO_DATA_DB_PATH)
+        DBHandler.__init__(self, logger, self.DB_PATH, self.NO_DATA_DB_PATH, self.FUND_PATH)
         EodApiRequestHandler.__init__(self, self.API_KEY)
 
         self.exchange = 'us'     # exchange code
@@ -106,12 +107,14 @@ class DBUpdater(
             -> LOG_PATH: {}
             -> TICKER_PATH: {}
             -> NO_DATA_DB_PATH: {}
-            
+            -> FUND_PATH: {}
+
             -> program starts at {} <-
             """.format(
                     start_date, end_date, len(trading_dates), len(trading_timestamps),
                     len(self.tickers), ', '.join(self.market_caps), self.exchange,
                     self.DB_PATH, self.API_KEY, self.LOG_PATH, self.TICKER_PATH, self.NO_DATA_DB_PATH,
+                    self.FUND_PATH,
                     dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 )
         
