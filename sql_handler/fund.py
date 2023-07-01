@@ -8,35 +8,137 @@ import os
 import pickle
 import logging
 import sqlite3
+import pandas as pd
 from delta.utils import Utils
 
 us_exg_pickle = 'us.pickle'
+ticker_data_table_name = 'tkl_data'
 ticker_data_db_file_name = 'data.db'
 
-class FundDB:
 
-    def __init__(self, logger:logging.Logger, FUND_DIR_PATH:str):
+class DataDB(Utils):
+    
+    def __init__(self, logger:logging.Logger, db_path:str):
         self.logger = logger
-        self.FUND_DIR_PATH = FUND_DIR_PATH  # dir
-        self.us_fund_file_path = '{}{}'.format(self.FUND_DIR_PATH, self.us_exg_pickle)
-        self.ticker_data_db_file_path = '{}{}'.format(self.FUND_DIR_PATH, self.ticker_data_file_path)
-        
+        self.ticker_data_db_file_path = db_path
         # sql connection
         self.logger.info(":: establish connection with data.db ::")
         self.con = sqlite3.connect(self.ticker_data_db_file_path)
         self.cur = self.con.cursor()
+        
+        Utils.__init__(self, self.logger)
+        
+    def crt_ticker_data_table(self, table_name:str=ticker_data_table_name):
+        """create ticker data table
+        """
+        self.logger.info("create \'{}\' tables on \'{}\'".format(table_name, ticker_data_db_file_name))
+        try:
+            crt_table_query = "CREATE TABLE IF NOT EXISTS {}(\
+                    code TEXT UNIQUE, name TEXT, country TEXT, exchange TEXT, currency TEXT, type TEXT, ipo_date TEXT);".format(table_name)
+            self.cur.execute(crt_table_query)
+            self.con.commit()
+        except Exception as e:
+            self.logger.info("- An exception occured while creating \'{}\' table: \'{}\', continue,,,".format(table_name, e))
 
+        self.logger.info("- created \'{}\' table".format(table_name))
+
+    def pull_ticker_data(self, tickers:list[str], table_name:str=ticker_data_table_name) -> pd.DataFrame:
+        """pull ticker data
+
+        Args:
+            ticker (str): _description_
+
+        Returns:
+            pd.DataFrame: _description_
+        """
+        self.logger.info("pull {} ticker data from \'{}\', table: \'{}\'".format(len(tickers), ticker_data_db_file_name, table_name))
+        try:
+            data_query = "SELECT * FROM {}".format(table_name)
+            raw = self.cur.execute(data_query)
+            data = raw.fetchall()
+            self.logger.info("- pull \'{}\' success".format(table_name))
+            
+            self.logger.info("- format df")
+            columns = [desc[0] for desc in self.cur.description]
+            df = pd.DataFrame(data, columns=columns)
+            
+            self.logger.info("- filter only tickers' data")
+            df = df[df['code'].isin(tickers)]
+
+            self.logger.info("- done, length {}".format(df.shape[0]))
+            return True, df
+        except Exception as e:
+            self.logger.info("- {}".format(e))
+            return False, {'exception': e}
+
+    def push_ticker_data(self, df:pd.DataFrame, table_name:str=ticker_data_table_name) -> bool:
+        """push ticker data
+
+        Args:
+            df (pd.DataFrame): data df
+
+        Returns:
+            bool: _description_
+        """
+        self.logger.info('prepare for ticker data push on \'{}\', table: \'{}\''.format(ticker_data_db_file_name, table_name))
+        # format column name
+        is_success_format, df = self._format_column_names(df, 'tkl_data')
+        if (not is_success_format):
+            self.logger.info('- fail to format dataframe')
+            return False
+        
+        # push data
+        try:
+            df.to_sql('tkl_data', self.con, if_exists='replace', index=False)
+            self.con.commit()
+            self.logger.info('success push {} ticker data on \'{}\', table: \'{}\''.format(
+                len(df['code']), ticker_data_db_file_name, ticker_data_table_name
+            ))
+            return True
+        except Exception as e:
+            self.logger.info('- {}'.format(e))
+            return False
+
+    def update_ipo_dates(self, data:dict[str, str]) -> bool:
+        """_summary_
+
+        Args:
+            data (dict[str, str]): _description_
+
+        Returns:
+            bool: _description_
+        """
+        ...
+        
+
+class FundDB(DataDB):
+
+    def __init__(self, logger:logging.Logger, FUND_DIR_PATH:str):
+        self.logger = logger
+        self.FUND_DIR_PATH = FUND_DIR_PATH  # dir
+        self.us_fund_file_path = '{}{}'.format(self.FUND_DIR_PATH, us_exg_pickle)
+        self.ticker_data_db_file_path = '{}{}'.format(self.FUND_DIR_PATH, ticker_data_db_file_name)
+        
         # make file
+        # create dir
+        if (not os.path.isdir(self.FUND_DIR_PATH)):
+            self.logger.info("create dir \'{}\'".format(self.FUND_DIR_PATH))
+            os.mkdir(self.FUND_DIR_PATH)
+            self.logger.info("- created dir: \'{}\'".format(self.FUND_DIR_PATH))
         # crt us.pickle
         if (not os.path.isfile(self.us_fund_file_path)):
             self.logger.info("create pickle file in \'{}\'".format(self.FUND_DIR_PATH))
-            open('{}{}'.format(self.FUND_DIR_PATH, us_exg_pickle), 'w').close()
-            self.logger.info("- created file: \'{}{}\'".format(self.FUND_DIR_PATH, us_exg_pickle))
+            open(self.us_fund_file_path, 'w').close()
+            self.logger.info("- created file: \'{}\'".format(us_exg_pickle))
         # crt data.db
-        if (not os.path.isfile(self.us_fund_file_path)):
+        if (not os.path.isfile(self.ticker_data_db_file_path)):
             self.logger.info("create data db file in \'{}\'".format(self.FUND_DIR_PATH))
-            open('{}{}'.format(self.FUND_DIR_PATH, us_exg_pickle), 'w').close()
-            self.logger.info("- created file: \'{}{}\'".format(self.FUND_DIR_PATH, us_exg_pickle))
+            open(self.ticker_data_db_file_path, 'w').close()
+            self.logger.info("- created file: \'{}\'".format(ticker_data_db_file_name))
+        
+        # init data.db
+        DataDB.__init__(self, self.logger, self.ticker_data_db_file_path)
+
 
     def push_fund(self, data_dicts:list[dict], file_name:str='us') -> bool:
         """ush fundamentals
@@ -120,8 +222,8 @@ class FundDB:
             
             return True, data_dicts
 
-    def pull_ipo_dates(self, tickers:list[str], file_name:str='us') -> tuple[bool, dict[str, str]]:
-        """pull ipo dates
+    def pull_ipo_dates_from_fud(self, tickers:list[str], file_name:str='us') -> tuple[bool, dict[str, str]]:
+        """pull ipo dates from fundamentals
 
         Args:
             tickers (list[str]): _description_
@@ -161,3 +263,5 @@ class FundDB:
         )
             
         return True, ipo_data
+
+

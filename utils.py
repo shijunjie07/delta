@@ -303,3 +303,73 @@ class Utils:
             bool: _description_
         """
         return os.path.isfile(file_path)
+
+    def _format_column_names(
+        self, df: pd.DataFrame, table_type:str,
+    ) -> tuple[bool, pd.DataFrame]:
+        """Formats the column names of a DataFrame.
+
+        Args:
+            df (pd.DataFrame): The DataFrame whose column names need to be formatted.
+
+        Returns:
+            tuple[bool, pd.DataFrame]: A tuple containing a boolean value indicating
+            whether the formatting was successful and the DataFrame with the
+            formatted column names.
+        """
+        self.logger.info('- start to format columns for {} push'.format(table_type))
+        # Create a new DataFrame to store the formatted column names
+        formatted_df = pd.DataFrame()
+        # check table types
+        if (table_type == 'eod'):
+            # Mapping of original eod column names to formatted column names
+            columns = {
+                'date': 'date_day',
+                'open': 'd_open',
+                'high': 'd_high',
+                'low': 'd_low',
+                'close': 'd_close',
+                'volume': 'd_volume',
+            }
+            exclude_cols = ['adjusted_close']
+        elif (table_type == 'intra'):
+            # Mapping of original intra column names to formatted column names
+            columns = {
+                'timestamp': 'date_time',
+                'open': 'm_open',
+                'high': 'm_high',
+                'low': 'm_low',
+                'close': 'm_close',
+                'volume': 'm_volume',
+            }
+            exclude_cols = ['gmtoffset', 'datetime']
+        elif (table_type == 'tkl_data'):
+            # Mapping of original intra column names to formatted column names
+            columns = {
+                'Code': 'code',
+                'Name': 'name',
+                'Country': 'country',
+                'Exchange': 'exchange',
+                'Currency': 'currency',
+                'Type': 'type',
+                'IPODate': 'ipo_date',
+            }
+            exclude_cols = []
+        else:
+            self.logger.info('- fail to format, wrong table type: \'{}\''.format(table_type))
+            return False, formatted_df
+        
+        # filter out un-want columns
+        df = df.drop(columns=exclude_cols, axis=1)
+        
+        # Check if the keys of columns match the column names of the DataFrame
+        if set(columns.keys()) != set(df.columns):
+            self.logger.info('- fail to format, keys of columns do not match the column names of the df')
+            return False, formatted_df
+        
+        # Iterate over the original column names and format them
+        for col in df.columns:
+            formatted_df[columns[col]] = df[col]
+        
+        # Return the DataFrame with the formatted column names
+        return True, formatted_df 

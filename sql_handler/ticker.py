@@ -7,6 +7,7 @@
 import pandas as pd
 import sqlite3
 import logging
+from delta.utils import Utils
 
 # import local
 from delta.sql_handler.nodata import NoDataDB
@@ -73,19 +74,8 @@ class GetData:
         self.logger.info('- existing dts: {}(date) {}(tss)'.format(len(dates), len(timestamps)))
 
         return dates, timestamps
-    
-    def pull_ipo_dates(self, tickers:list[str]) -> dict[str, str]:
-        """pull ipo dates
 
-        Args:
-            tickers (list[str]): _description_
-
-        Returns:
-            dict[str, str]: ipo dates
-        """
-        ...
-
-class LoadData(NoDataDB):
+class LoadData(NoDataDB, Utils):
     # TODO:
     # 1. add a check push dt function 
     #    to monitor nodata dt input
@@ -100,9 +90,10 @@ class LoadData(NoDataDB):
         self.DB_PATH = DB_PATH
         self.con = db_con
         self.cur = db_cur
-
+        
         # init NoDataDB
         NoDataDB.__init__(self, self.logger, NO_DATA_DB_PATH)
+        Utils.__init__(self, self.logger)
 
     def push_eod(self, ticker: str, df: pd.DataFrame) -> bool:
         """
@@ -119,7 +110,7 @@ class LoadData(NoDataDB):
         # format column name
         is_success_format, df = self._format_column_names(df, 'eod')
         if (not is_success_format):
-            self.logger.info('* fail to push eod')
+            self.logger.info('- fail to format dataframe')
             return False
         
         # push data
@@ -159,9 +150,8 @@ class LoadData(NoDataDB):
         # format column name
         is_success_format, df = self._format_column_names(df, 'intra')
         if (not is_success_format):
-            self.logger.info('* fail to push intra')
+            self.logger.info('- fail to format dataframe')
             return False
-        
         
         # push data
         try:
@@ -184,64 +174,6 @@ class LoadData(NoDataDB):
             self.logger.info('error occurred while pushing \'{}\' intra'.format(ticker))
             self.logger.info('- {}'.format(e))
             return False
-
-    def _format_column_names(
-        self, df: pd.DataFrame, table_type:str,
-    ) -> tuple[bool, pd.DataFrame]:
-        """Formats the column names of a DataFrame.
-
-        Args:
-            df (pd.DataFrame): The DataFrame whose column names need to be formatted.
-
-        Returns:
-            tuple[bool, pd.DataFrame]: A tuple containing a boolean value indicating
-            whether the formatting was successful and the DataFrame with the
-            formatted column names.
-        """
-        self.logger.info('- start to format columns for {} push'.format(table_type))
-        # Create a new DataFrame to store the formatted column names
-        formatted_df = pd.DataFrame()
-        # check table types
-        if (table_type == 'eod'):
-            # Mapping of original eod column names to formatted column names
-            columns = {
-                'date': 'date_day',
-                'open': 'd_open',
-                'high': 'd_high',
-                'low': 'd_low',
-                'close': 'd_close',
-                'volume': 'd_volume',
-            }
-            exclude_cols = ['adjusted_close']
-        elif (table_type == 'intra'):
-            # Mapping of original intra column names to formatted column names
-            columns = {
-                'timestamp': 'date_time',
-                'open': 'm_open',
-                'high': 'm_high',
-                'low': 'm_low',
-                'close': 'm_close',
-                'volume': 'm_volume',
-            }
-            exclude_cols = ['gmtoffset', 'datetime']
-        else:
-            self.logger.info('- fail to format, wrong table type: \'{}\''.format(table_type))
-            return False, formatted_df
-        
-        # filter out un-want columns
-        df = df.drop(columns=exclude_cols, axis=1)
-        
-        # Check if the keys of columns match the column names of the DataFrame
-        if set(columns.keys()) != set(df.columns):
-            self.logger.info('- fail to format, keys of columns do not match the column names of the df')
-            return False, formatted_df
-        
-        # Iterate over the original column names and format them
-        for col in df.columns:
-            formatted_df[columns[col]] = df[col]
-        
-        # Return the DataFrame with the formatted column names
-        return True, formatted_df 
 
     def _rm_nodata_dts(self, ticker:str, dates:list[str], timestamps:list[int]):
         """remove nodata dts
