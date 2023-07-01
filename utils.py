@@ -13,6 +13,7 @@ import pandas as pd
 import datetime as dt
 import pandas_market_calendars as mcal
 
+from delta.logger import logger
 
 est = pytz.timezone("America/New_York") # Eastern time
 
@@ -23,14 +24,11 @@ numpy_num_types = [
     np.float32, np.float64,
 ]
 
+desire_fmt = '%Y-%m-%d'
 
 class Utils:
-    
-    def __init__(self, logger:logging.Logger):
-        self.logger = logger
-        self.desire_fmt = '%Y-%m-%d'
 
-    def dt_obj_2_str(self, dates:list) -> list[str]:
+    def dt_obj_2_str(dates:list) -> list[str]:
         """convert the list of input into string with format "%Y-%m-%d"
 
         Args:
@@ -48,7 +46,7 @@ class Utils:
             float,
         ]
         # check numpy types
-        dates = [self._convert_numpy_types(d) for d in dates]
+        dates = [Utils()._convert_numpy_types(d) for d in dates]
         dates_desire_fmt = []
         # convert to str
         for date in dates:
@@ -74,21 +72,21 @@ class Utils:
             elif (isinstance(date, dt_types[3])):
                 # is timestamp
                 if (len(str(date)) >= 10):
-                    dates_desire_fmt.append(dt.datetime.fromtimestamp(float(date), tz=est).strftime(self.desire_fmt))
+                    dates_desire_fmt.append(dt.datetime.fromtimestamp(float(date), tz=est).strftime(desire_fmt))
                 # is string datetime
                 elif (len(str(date)) == 8):
-                    dates_desire_fmt.append(dt.datetime.strptime(str(date), self.desire_fmt).strftime(self.desire_fmt))
+                    dates_desire_fmt.append(dt.datetime.strptime(str(date), desire_fmt).strftime(desire_fmt))
                 else:
                     raise ValueError("Unknown int pattern '{}'".format(date))
             # float
             elif (isinstance(date, dt_types[4])):
-                dates_desire_fmt.append(dt.datetime.fromtimestamp(date, tz=est).strftime(self.desire_fmt))
+                dates_desire_fmt.append(dt.datetime.fromtimestamp(date, tz=est).strftime(desire_fmt))
             # other types
             else:
                 raise ValueError("Unknown input type '{}', '{}'".format(type(date), date))
         return dates_desire_fmt
 
-    def _convert_numpy_types(self, input_data):
+    def _convert_numpy_types(input_data):
         """converts numpy types into float or int
 
         Args:
@@ -104,7 +102,7 @@ class Utils:
         # if not numpy number types then return itself
         return input_data
     
-    def all_trading_dts(self, start_date:str, end_date:str) -> tuple[list[str], list[int]]:
+    def all_trading_dts(start_date:str, end_date:str) -> tuple[list[str], list[int]]:
         """construct all trading dates and timestamps between start and end dates
            * only call this function once *
 
@@ -120,7 +118,7 @@ class Utils:
         nyse = mcal.get_calendar('NYSE')
         schedule = nyse.schedule(start_date, end_date) # type: ignore
         trading_dates = [
-            dt.datetime.strftime(d, self.desire_fmt)
+            dt.datetime.strftime(d, desire_fmt)
             for d in schedule.index.normalize().tolist()
         ]
         
@@ -142,7 +140,7 @@ class Utils:
         return trading_dates, timestamps
 
     def missing_dts(
-        self, reference_dates:list, comparant_dates:list,
+        reference_dates:list, comparant_dates:list,
         reference_timestamps:list, comparant_timestamps:list
     ) -> tuple[list[str], list[int]]:
         """construct missing dates and timestamps
@@ -156,10 +154,10 @@ class Utils:
         Returns:
             tuple[list[str], list[int]]: _description_
         """
-        self.logger.info('checking missing dts: {}(ref_dates), {}(ref_tss)'.format(
+        logger.info('checking missing dts: {}(ref_dates), {}(ref_tss)'.format(
             len(reference_dates), len(reference_timestamps)
         ))
-        self.logger.info('                   {}(cmp_dates), {}(cmp_tss)'.format(
+        logger.info('                   {}(cmp_dates), {}(cmp_tss)'.format(
             len(comparant_dates), len(comparant_timestamps)
         ))
         
@@ -167,12 +165,12 @@ class Utils:
         missing_dates = list(set(reference_dates) - set(comparant_dates))
         missing_timestamps = list(set(reference_timestamps) - set(comparant_timestamps))
         
-        self.logger.info('- missing dts: {}(dates) {}(tss)'.format(len(missing_dates), len(missing_timestamps)))
+        logger.info('- missing dts: {}(dates) {}(tss)'.format(len(missing_dates), len(missing_timestamps)))
         
         return missing_dates, missing_timestamps
         
     def timestamp_periods(
-        self, max_days_period:int, start_date:str,
+        max_days_period:int, start_date:str,
         end_date:str,
     ) -> list[list]:
         """_summary_
@@ -191,8 +189,8 @@ class Utils:
         timestamps_periods = []
         
         # construct dt obj and check input timedelta
-        start_dt_obj = dt.datetime.strptime(start_date, self.desire_fmt)
-        end_dt_obj = dt.datetime.strptime(end_date, self.desire_fmt)
+        start_dt_obj = dt.datetime.strptime(start_date, desire_fmt)
+        end_dt_obj = dt.datetime.strptime(end_date, desire_fmt)
         start_end_days = (end_dt_obj - start_dt_obj).days      # days between start and end
 
         # check if exceed maximum period per api intra request
@@ -208,16 +206,16 @@ class Utils:
                 
                 if (future_end_days_perd > 0):     # period future exceeds end date
                     timestamps_periods.append(
-                        self._construct_trading_period_timestamps(
-                            current_dt_obj.strftime(self.desire_fmt), end_date
+                        Utils()._construct_trading_period_timestamps(
+                            current_dt_obj.strftime(desire_fmt), end_date
                         )
                     )
                     is_last_period = True
                 else:       # not exceed next iteration
                     timestamps_periods.append(
-                        self._construct_trading_period_timestamps(
-                            current_dt_obj.strftime(self.desire_fmt),
-                            future_dt_obj.strftime(self.desire_fmt)
+                        Utils()._construct_trading_period_timestamps(
+                            current_dt_obj.strftime(desire_fmt),
+                            future_dt_obj.strftime(desire_fmt)
                         )
                     )
                     last_end_dt_obj = future_dt_obj
@@ -227,10 +225,10 @@ class Utils:
             return timestamps_periods 
             
         else:
-            return [self._construct_trading_period_timestamps(start_date, end_date)]
+            return [Utils()._construct_trading_period_timestamps(start_date, end_date)]
 
     def _construct_trading_period_timestamps(
-        self, start_date:str, end_date:str,
+        start_date:str, end_date:str,
     ) -> list[int]:
         """_summary_
 
@@ -246,7 +244,7 @@ class Utils:
             int(pd.Timestamp("{} 20:00:00".format(end_date), tz=est).timestamp())    # after-hour
         ]
         
-    def _check_save_error_tkls(self, error_tkls:list[str]):
+    def _check_save_error_tkls(error_tkls:list[str]):
         """choose to save error tickers
 
         Args:
@@ -260,19 +258,19 @@ class Utils:
         while (is_loop):
             is_save_error_tkls = input().lower()
             if (is_save_error_tkls == "y"):
-                file_path = self._ask_4_path()
+                file_path = Utils()._ask_4_path()
                 pd.DataFrame(columns=['ticker'], data=np.array(error_tkls)).to_csv(file_path)
-                self.logger.info('{}{}'.format(save_error_tickers_info, is_save_error_tkls))
-                self.logger.info('error tickers saved to \'{}\''.format(file_path))
+                logger.info('{}{}'.format(save_error_tickers_info, is_save_error_tkls))
+                logger.info('error tickers saved to \'{}\''.format(file_path))
                 print('error tickers saved to \'{}\''.format(file_path))
                 is_loop = False
             elif (is_save_error_tkls == "n"):
-                self.logger.info('{}{}'.format(save_error_tickers_info, is_save_error_tkls))
+                logger.info('{}{}'.format(save_error_tickers_info, is_save_error_tkls))
                 is_loop = False
             else:
                 continue
 
-    def _ask_4_path(self) -> str:
+    def _ask_4_path() -> str:
         """ask file path to store error tickers
 
         Returns:
@@ -305,7 +303,7 @@ class Utils:
         return os.path.isfile(file_path)
 
     def _format_column_names(
-        self, df: pd.DataFrame, table_type:str,
+        df: pd.DataFrame, table_type:str,
     ) -> tuple[bool, pd.DataFrame]:
         """Formats the column names of a DataFrame.
 
@@ -317,7 +315,7 @@ class Utils:
             whether the formatting was successful and the DataFrame with the
             formatted column names.
         """
-        self.logger.info('- start to format columns for {} push'.format(table_type))
+        logger.info('- start to format columns for {} push'.format(table_type))
         # Create a new DataFrame to store the formatted column names
         formatted_df = pd.DataFrame()
         # check table types
@@ -356,7 +354,7 @@ class Utils:
             }
             exclude_cols = []
         else:
-            self.logger.info('- fail to format, wrong table type: \'{}\''.format(table_type))
+            logger.info('- fail to format, wrong table type: \'{}\''.format(table_type))
             return False, formatted_df
         
         # filter out un-want columns
@@ -364,7 +362,7 @@ class Utils:
         
         # Check if the keys of columns match the column names of the DataFrame
         if set(columns.keys()) != set(df.columns):
-            self.logger.info('- fail to format, keys of columns do not match the column names of the df')
+            logger.info('- fail to format, keys of columns do not match the column names of the df')
             return False, formatted_df
         
         # Iterate over the original column names and format them

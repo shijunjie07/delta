@@ -99,18 +99,6 @@ class DataDB(Utils):
             self.logger.info('- {}'.format(e))
             return False
 
-    def update_ipo_dates(self, data:dict[str, str]) -> bool:
-        """_summary_
-
-        Args:
-            data (dict[str, str]): _description_
-
-        Returns:
-            bool: _description_
-        """
-        ...
-        
-
 class FundDB(DataDB):
 
     def __init__(self, logger:logging.Logger, FUND_DIR_PATH:str):

@@ -75,7 +75,9 @@ class GetData:
 
         return dates, timestamps
 
-class LoadData(NoDataDB, Utils):
+class LoadData(
+    NoDataDB,
+):
     # TODO:
     # 1. add a check push dt function 
     #    to monitor nodata dt input
@@ -93,7 +95,6 @@ class LoadData(NoDataDB, Utils):
         
         # init NoDataDB
         NoDataDB.__init__(self, self.logger, NO_DATA_DB_PATH)
-        Utils.__init__(self, self.logger)
 
     def push_eod(self, ticker: str, df: pd.DataFrame) -> bool:
         """
@@ -108,7 +109,7 @@ class LoadData(NoDataDB, Utils):
         """
         self.logger.info('prepare for eod push')
         # format column name
-        is_success_format, df = self._format_column_names(df, 'eod')
+        is_success_format, df = Utils()._format_column_names(df, 'eod')
         if (not is_success_format):
             self.logger.info('- fail to format dataframe')
             return False
@@ -148,7 +149,7 @@ class LoadData(NoDataDB, Utils):
         self.logger.info('prepare for intra push')
 
         # format column name
-        is_success_format, df = self._format_column_names(df, 'intra')
+        is_success_format, df = Utils()._format_column_names(df, 'intra')
         if (not is_success_format):
             self.logger.info('- fail to format dataframe')
             return False

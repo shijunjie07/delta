@@ -18,14 +18,15 @@ from delta.request_handler import EodApiRequestHandler
 
 
 class DBUpdater(
-    Utils, DBHandler,
+    DBHandler,
+    Utils,
     EodApiRequestHandler,
 ):
     """database update class
 
     Args:
-        Utils (_type_): _description_
         DBHandler (_type_): _description_
+        Utils (_type_): _description_
         EodApiRequestHandler (_type_): _description_
     """ 
     def __init__(
@@ -88,8 +89,14 @@ class DBUpdater(
         # construct trading dts
         trading_dates, trading_timestamps = self.all_trading_dts(start_date, end_date)
         # ipo dates
-        ipo_dates = self.pull_ipo_dates(self.tickers)
-        
+        is_success_ipo_dates, ipo_dates = self.pull_ipo_dates_from_fud(self.tickers)
+        if (is_success_ipo_dates):
+            if (len(ipo_dates) != len(self.tickers)):
+                self.logger.info("Unmatch len {} of \'ipo_dates\' and {} of \'tickers\'".format(len(ipo_dates), len(self.tickers)))
+                raise ValueError("Unmatch len {} of \'ipo_dates\' and {} of \'tickers\'".format(len(ipo_dates), len(self.tickers)))
+        else:
+            raise Exception("fail to pull \'ipo_dates\'")
+
         # init info
         init_string = """
             * init update database
@@ -141,7 +148,7 @@ class DBUpdater(
             diff = dt.datetime.strptime(ipo_dates[ticker], '%Y-%m-%d')\
                    - dt.datetime.strptime(start_date, '%Y-%m-%d')
             if (diff.days > 0):
-                tkl_start_date = ipo_dates[ticker]
+                tkl_start_date =  [ticker]
                 # update trading dts
                 if (tkl_start_date in trading_dates):
                     tkl_trading_dates = trading_dates[trading_dates.index(tkl_start_date):]
