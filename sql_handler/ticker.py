@@ -212,24 +212,6 @@ class TickerDB(GetData, LoadData):
         
         GetData.__init__(self, self.logger, self.DB_PATH, self.con, self.cur)
         LoadData.__init__(self, self.logger, self.DB_PATH, NO_DATA_DB_PATH, self.con, self.cur)
-
-    def get_mrkcap_tkls(
-        self, ticker_path:str, market_caps:list[str]
-    ) -> list[str]:
-        """_summary_
-
-        Args:
-            ticker_path (str): _description_
-            market_caps (list[str]): _description_
-
-        Returns:
-            list[str]: a list of tickers
-        """
-        # tickers = []
-        # for cap in market_caps:
-        #             tickers.extend(list(pd.read_csv(f"{ticker_path}{cap}.csv")["Symbol"]))
-        # return [tkl.replace(" ", "") for tkl in tickers if (isinstance(tkl, str))]
-        ...
         
     def is_tkl_tables_exist(self, ticker:str) -> tuple[bool, list[str]]:
         """check if the input ticker exists in database

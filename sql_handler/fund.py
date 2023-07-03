@@ -15,6 +15,16 @@ us_exg_pickle = 'us.pickle'
 ticker_data_table_name = 'tkl_data'
 ticker_data_db_file_name = 'data.db'
 
+ticker_data_keys = {
+    'code',
+    'name',
+    'country',
+    'exchange',
+    'currency',
+    'type',
+    'ipo_date',
+    'mkt_cap',
+}
 
 class DataDB(Utils):
     
@@ -34,7 +44,8 @@ class DataDB(Utils):
         self.logger.info("create \'{}\' tables on \'{}\'".format(table_name, ticker_data_db_file_name))
         try:
             crt_table_query = "CREATE TABLE IF NOT EXISTS {}(\
-                    code TEXT UNIQUE, name TEXT, country TEXT, exchange TEXT, currency TEXT, type TEXT, ipo_date TEXT);".format(table_name)
+                    code TEXT UNIQUE, name TEXT, country TEXT, exchange TEXT,\
+                    currency TEXT, type TEXT, ipo_date TEXT, mkt_cap TEXT);".format(table_name)
             self.cur.execute(crt_table_query)
             self.con.commit()
         except Exception as e:
@@ -42,17 +53,40 @@ class DataDB(Utils):
 
         self.logger.info("- created \'{}\' table".format(table_name))
 
-    def pull_ticker_data(self, tickers:list[str], table_name:str=ticker_data_table_name) -> pd.DataFrame:
+    def pull_ticker_data(self, tickers:list[str], table_name:str=ticker_data_table_name, keys:list[str]=None,) -> pd.DataFrame:
         """pull ticker data
 
         Args:
-            ticker (str): _description_
+        -----
+            tickers (list[str]): _description_
+            table_name (str, optional): _description_. Defaults to ticker_data_table_name.
+            keys (list[str], optional): table columns. Defaults to None.
 
         Returns:
+        --------
             pd.DataFrame: _description_
+
+        Examples
+        --------
+        Constructing DataFrame from a dictionary.
+
+        pull market caps
+        >>> cols = ['mkt_cap']
+        >>> tkls = ['AAPL', 'TSLA']
+        >>> df = obj.pull_ticker_data(tickers=tkls, keys=cols)
+        >>> df
+        ticker mkt_cap
+        AAPL     MEGA
+        TSLA     MEGA
+       
         """
         self.logger.info("pull {} ticker data from \'{}\', table: \'{}\'".format(len(tickers), ticker_data_db_file_name, table_name))
         try:
+            if (keys):
+                invalid_keys = [elem for elem in keys if elem not in ticker_data_keys]
+                if (invalid_keys):
+                    raise ValueError("keys element does not match with table column names: {}".format(', '.join(invalid_keys)))
+
             data_query = "SELECT * FROM {}".format(table_name)
             raw = self.cur.execute(data_query)
             data = raw.fetchall()
@@ -64,6 +98,12 @@ class DataDB(Utils):
             
             self.logger.info("- filter only tickers' data")
             df = df[df['code'].isin(tickers)]
+            
+            # filter keys columns
+            if (keys):
+                keys.append('code')
+                self.logger.info("- generate subset df with columns: {}".format(', '.join(keys)))
+                df = df[keys]
 
             self.logger.info("- done, length {}".format(df.shape[0]))
             return True, df

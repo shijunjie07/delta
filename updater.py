@@ -59,13 +59,10 @@ class DBUpdater(
             'mega',
         ]
         
-        # # to do:
-        # if (not tickers):
-        #     self.TICKER_PATH = os.environ['TICKER_PATH']
-        #     self.tickers = self.get_mrkcap_tkls(self.TICKER_PATH, self.market_caps)   # tickers to update
-        # else:
-        #     self.TICKER_PATH = None
-        #     self.tickers = tickers
+        if self.tickers:
+            self.tickers = tickers
+        else:
+            self.tickers = self.get_mrkcap_tkls(self.TICKER_PATH, self.market_caps)   # tickers to update
 
         # init classes
         Utils.__init__(self, logger)
