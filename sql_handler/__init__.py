@@ -16,12 +16,12 @@ fund_dir_name = 'fund/'
 
 class DBHandler(TickerDB, NoDataDB, FundDB):
     
-    def __init__(self, logger:logging.Logger, data_path:str):
+    def __init__(self, logger:logging.Logger, data_dir_path:str):
         
         self.logger = logger
-        self.DB_PATH = '{}{}'.format(data_path, db_file_name)
-        self.NO_DATA_DB_PATH = '{}{}'.format(data_path, nodata_db_file_name)
-        self.FUND_DIR_PATH = '{}{}'.format(data_path, fund_dir_name)
+        self.DB_PATH = '{}{}'.format(data_dir_path, db_file_name)
+        self.NO_DATA_DB_PATH = '{}{}'.format(data_dir_path, nodata_db_file_name)
+        self.FUND_DIR_PATH = '{}{}'.format(data_dir_path, fund_dir_name)
 
         # init
         TickerDB.__init__(self, self.logger, self.DB_PATH, self.NO_DATA_DB_PATH)

@@ -13,6 +13,7 @@ date_now = dt.datetime.now().strftime("%Y-%m-%dT%H-%M")
 logger_file_path = '{}/deltaLog_{}.log'.format(os.environ['LOG_PATH'], date_now)
 logger = logging.basicConfig(
     filename=logger_file_path,
-    level=logging.INFO, format='%(asctime)s:%(levelname)s: | %(message)s'
+    level=logging.INFO, format='%(asctime)s:%(levelname)s: | %(message)s',
+    force=True    # remove any existing handlers attached to the root logger
 )
 logger = logging.getLogger(__name__)

@@ -26,7 +26,7 @@ ticker_data_keys = {
     'mkt_cap',
 }
 
-class DataDB(Utils):
+class DataDB:
     
     def __init__(self, logger:logging.Logger, db_path:str):
         self.logger = logger
@@ -36,7 +36,7 @@ class DataDB(Utils):
         self.con = sqlite3.connect(self.ticker_data_db_file_path)
         self.cur = self.con.cursor()
         
-        Utils.__init__(self, self.logger)
+        # Utils().__init__(self, self.logger)
         
     def crt_ticker_data_table(self, table_name:str=ticker_data_table_name):
         """create ticker data table
@@ -122,7 +122,7 @@ class DataDB(Utils):
         """
         self.logger.info('prepare for ticker data push on \'{}\', table: \'{}\''.format(ticker_data_db_file_name, table_name))
         # format column name
-        is_success_format, df = self._format_column_names(df, 'tkl_data')
+        is_success_format, df = Utils._format_column_names(df, 'tkl_data')
         if (not is_success_format):
             self.logger.info('- fail to format dataframe')
             return False

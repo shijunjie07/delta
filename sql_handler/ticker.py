@@ -45,7 +45,7 @@ class GetData:
         
         # queries
         eod_query = 'SELECT date_day FROM {}_eod WHERE date_day>={} AND date_day<={};'.format(
-            ticker, start_date.replace('-', ''), end_date.replace('-', '')
+            ticker, start_date, end_date
         )
         intra_query = 'SELECT date_time FROM {}_intra WHERE date_time>={} AND date_time<={};'.format(
             ticker, start_ts, end_ts
@@ -58,10 +58,6 @@ class GetData:
         # extract dates
         if (raw_eod):
             dates = [str(x[dt_obj_index]) for x in raw_eod]
-            dates = [
-                '{}-{}-{}'.format(x[:4], x[:6], x[6:])
-                for x in dates
-            ]
         else:
             dates = []
         
@@ -196,8 +192,6 @@ class LoadData(
 
         return is_success_rm
 
-        
-
 class TickerDB(GetData, LoadData):
     
     def __init__(self, logger:logging.Logger, DB_PATH:str, NO_DATA_DB_PATH:str):
@@ -255,7 +249,7 @@ class TickerDB(GetData, LoadData):
         if ('eod' in table_types):
             #create eod
             self.cur.execute(f"CREATE TABLE IF NOT EXISTS {ticker}_eod(\
-                date_day DATE UNIQUE, d_open FLOAT, d_high FLOAT, d_low FLOAT, d_close FLOAT, d_volume BIGINT);")
+                date_day DATE UNIQUE, d_open FLOAT, d_high FLOAT, d_low FLOAT, d_close FLOAT, d_volume BIGINT, d_adj_close FLOAT);")
             self.con.commit()
         if ('intra' in table_types):
             #create intra

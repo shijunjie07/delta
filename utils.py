@@ -328,8 +328,9 @@ class Utils:
                 'low': 'd_low',
                 'close': 'd_close',
                 'volume': 'd_volume',
+                'adjusted_close': 'd_adj_close',
             }
-            exclude_cols = ['adjusted_close']
+            exclude_cols = []
         elif (table_type == 'intra'):
             # Mapping of original intra column names to formatted column names
             columns = {
