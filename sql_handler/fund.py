@@ -33,8 +33,8 @@ class DataDB:
         self.ticker_data_db_file_path = db_path
         # sql connection
         self.logger.info(":: establish connection with data.db ::")
-        self.con = sqlite3.connect(self.ticker_data_db_file_path)
-        self.cur = self.con.cursor()
+        self.data_con = sqlite3.connect(self.ticker_data_db_file_path)
+        self.data_cur = self.data_con.cursor()
         
         # Utils().__init__(self, self.logger)
         
@@ -46,8 +46,8 @@ class DataDB:
             crt_table_query = "CREATE TABLE IF NOT EXISTS {}(\
                     code TEXT UNIQUE, name TEXT, country TEXT, exchange TEXT,\
                     currency TEXT, type TEXT, ipo_date TEXT, mkt_cap TEXT);".format(table_name)
-            self.cur.execute(crt_table_query)
-            self.con.commit()
+            self.data_cur.execute(crt_table_query)
+            self.data_con.commit()
         except Exception as e:
             self.logger.info("- An exception occured while creating \'{}\' table: \'{}\', continue,,,".format(table_name, e))
 
@@ -88,12 +88,12 @@ class DataDB:
                     raise ValueError("keys element does not match with table column names: {}".format(', '.join(invalid_keys)))
 
             data_query = "SELECT * FROM {}".format(table_name)
-            raw = self.cur.execute(data_query)
+            raw = self.data_cur.execute(data_query)
             data = raw.fetchall()
             self.logger.info("- pull \'{}\' success".format(table_name))
             
             self.logger.info("- format df")
-            columns = [desc[0] for desc in self.cur.description]
+            columns = [desc[0] for desc in self.data_cur.description]
             df = pd.DataFrame(data, columns=columns)
             
             self.logger.info("- filter only tickers' data")
@@ -129,8 +129,8 @@ class DataDB:
         
         # push data
         try:
-            df.to_sql('tkl_data', self.con, if_exists='replace', index=False)
-            self.con.commit()
+            df.to_sql('tkl_data', self.data_con, if_exists='replace', index=False)
+            self.data_con.commit()
             self.logger.info('success push {} ticker data on \'{}\', table: \'{}\''.format(
                 len(df['code']), ticker_data_db_file_name, ticker_data_table_name
             ))

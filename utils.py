@@ -46,7 +46,7 @@ class Utils:
             float,
         ]
         # check numpy types
-        dates = [Utils()._convert_numpy_types(d) for d in dates]
+        dates = [Utils._convert_numpy_types(d) for d in dates]
         dates_desire_fmt = []
         # convert to str
         for date in dates:
@@ -75,7 +75,7 @@ class Utils:
                     dates_desire_fmt.append(dt.datetime.fromtimestamp(float(date), tz=est).strftime(desire_fmt))
                 # is string datetime
                 elif (len(str(date)) == 8):
-                    dates_desire_fmt.append(dt.datetime.strptime(str(date), desire_fmt).strftime(desire_fmt))
+                    dates_desire_fmt.append(dt.datetime.strptime(str(date), '%Y%m%d').strftime(desire_fmt))
                 else:
                     raise ValueError("Unknown int pattern '{}'".format(date))
             # float
@@ -206,14 +206,14 @@ class Utils:
                 
                 if (future_end_days_perd > 0):     # period future exceeds end date
                     timestamps_periods.append(
-                        Utils()._construct_trading_period_timestamps(
+                        Utils._construct_trading_period_timestamps(
                             current_dt_obj.strftime(desire_fmt), end_date
                         )
                     )
                     is_last_period = True
                 else:       # not exceed next iteration
                     timestamps_periods.append(
-                        Utils()._construct_trading_period_timestamps(
+                        Utils._construct_trading_period_timestamps(
                             current_dt_obj.strftime(desire_fmt),
                             future_dt_obj.strftime(desire_fmt)
                         )
@@ -225,7 +225,7 @@ class Utils:
             return timestamps_periods 
             
         else:
-            return [Utils()._construct_trading_period_timestamps(start_date, end_date)]
+            return [Utils._construct_trading_period_timestamps(start_date, end_date)]
 
     def _construct_trading_period_timestamps(
         start_date:str, end_date:str,
@@ -258,7 +258,7 @@ class Utils:
         while (is_loop):
             is_save_error_tkls = input().lower()
             if (is_save_error_tkls == "y"):
-                file_path = Utils()._ask_4_path()
+                file_path = Utils._ask_4_path()
                 pd.DataFrame(columns=['ticker'], data=np.array(error_tkls)).to_csv(file_path)
                 logger.info('{}{}'.format(save_error_tickers_info, is_save_error_tkls))
                 logger.info('error tickers saved to \'{}\''.format(file_path))

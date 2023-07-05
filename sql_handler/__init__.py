@@ -24,6 +24,13 @@ class DBHandler(TickerDB, NoDataDB, FundDB):
         self.FUND_DIR_PATH = '{}{}'.format(data_dir_path, fund_dir_name)
 
         # init
-        TickerDB.__init__(self, self.logger, self.DB_PATH, self.NO_DATA_DB_PATH)
         NoDataDB.__init__(self, self.logger, self.NO_DATA_DB_PATH)
+        TickerDB.__init__(self, self.logger, self.DB_PATH)
         FundDB.__init__(self, self.logger, self.FUND_DIR_PATH)
+    
+    def close_all_conn(self):
+        self.logger.info(":: Closing All Database Connections ::")
+        self.con.close()
+        self.nodata_con.close()
+        self.data_con.close()
+        self.logger.info(":: Connection Closed ::")

@@ -124,18 +124,18 @@ class DBUpdater(
         for i in iter_obj:
             ticker = self.tickers[i]
             iter_obj.set_description('{}'.format(ticker))
-            logger.info('-----------------------------------')
+            logger.info('-------------------------------------------')
             logger.info('update {}'.format(ticker))
             
             # check ticker table exists, if not create tables
-            is_tkl_table_exists, crt_tkl_tables = self.is_tkl_tables_exist(ticker)
+            is_tkl_table_exists, tkl_tables = self.is_tkl_tables_exist(ticker)
             # if ticker table not exists, then create table 
             if (not is_tkl_table_exists):
-                self.crt_tkl_tables(ticker, crt_tkl_tables)        # create tables
+                self.crt_tkl_tables(ticker, tkl_tables)        # create tables
             # check nodata dt table exists, if not create table
-            is_nodata_table_exists = self.is_nodata_table_exists(ticker)
+            is_nodata_table_exists, nodata_tables = self.is_nodata_table_exists(ticker)
             if (not is_nodata_table_exists):
-                self.crt_nodata_table(ticker, self.table_types)
+                self.crt_nodata_tables(ticker, nodata_tables)
                 
             # by this time, we will have all dt and ticker table types in place.
             # ----------------------------------------------------
