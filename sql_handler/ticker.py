@@ -86,7 +86,6 @@ class LoadData(NoDataDB):
         self.DB_PATH = DB_PATH
         self.con = db_con
         self.cur = db_cur
-        
         # # init NoDataDB
         # NoDataDB.__init__(self, self.logger, NO_DATA_DB_PATH)
 
@@ -128,7 +127,7 @@ class LoadData(NoDataDB):
             self.logger.info('error occurred while pushing \'{}\' eod'.format(ticker))
             self.logger.info('- {}'.format(e))
             return False
-
+        
     def push_intra(self, ticker:str, df:pd.DataFrame) -> bool:
         """
         Pushes the data from a pandas DataFrame into the corresponding intra-day table in the database.
