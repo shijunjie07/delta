@@ -151,7 +151,8 @@ class FundDB(DataDB):
         
         # init data.db
         DataDB.__init__(self, self.logger, self.ticker_data_db_file_path)
-        
+
+
     def _init_fund_files(self):
         """init fund files
         """
@@ -295,5 +296,3 @@ class FundDB(DataDB):
         )
             
         return True, ipo_data
-
-
