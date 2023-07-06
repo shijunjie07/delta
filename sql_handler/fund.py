@@ -10,10 +10,9 @@ import logging
 import sqlite3
 import pandas as pd
 from delta.utils import Utils
-
-us_exg_pickle = 'us.pickle'
-ticker_data_table_name = 'tkl_data'
-ticker_data_db_file_name = 'data.db'
+from delta.sql_handler import us_exg_pickle
+from delta.sql_handler import ticker_data_table_name
+from delta.sql_handler import ticker_data_db_file_name
 
 ticker_data_keys = {
     'code',
@@ -147,27 +146,32 @@ class FundDB(DataDB):
         self.us_fund_file_path = '{}{}'.format(self.FUND_DIR_PATH, us_exg_pickle)
         self.ticker_data_db_file_path = '{}{}'.format(self.FUND_DIR_PATH, ticker_data_db_file_name)
         
-        # make file
-        # create dir
-        if (not os.path.isdir(self.FUND_DIR_PATH)):
-            self.logger.info("create dir \'{}\'".format(self.FUND_DIR_PATH))
-            os.mkdir(self.FUND_DIR_PATH)
-            self.logger.info("- created dir: \'{}\'".format(self.FUND_DIR_PATH))
-        # crt us.pickle
-        if (not os.path.isfile(self.us_fund_file_path)):
-            self.logger.info("create pickle file in \'{}\'".format(self.FUND_DIR_PATH))
-            open(self.us_fund_file_path, 'w').close()
-            self.logger.info("- created file: \'{}\'".format(us_exg_pickle))
-        # crt data.db
-        if (not os.path.isfile(self.ticker_data_db_file_path)):
-            self.logger.info("create data db file in \'{}\'".format(self.FUND_DIR_PATH))
-            open(self.ticker_data_db_file_path, 'w').close()
-            self.logger.info("- created file: \'{}\'".format(ticker_data_db_file_name))
+        # init fund files
+        self._init_fund_files()
         
         # init data.db
         DataDB.__init__(self, self.logger, self.ticker_data_db_file_path)
+        
+    def _init_fund_files(self):
+        """init fund files
+        """
+        self.logger.info("init fund files")
+        # create fundamental dir
+        if (not os.path.isdir(self.FUND_DIR_PATH)):
+            self.logger.info("- create dir \'{}\'".format(self.FUND_DIR_PATH))
+            os.mkdir(self.FUND_DIR_PATH)
+            
+        # crt us.pickle
+        if (not os.path.isfile(self.us_fund_file_path)):
+            self.logger.info("- create \'{}\' file in \'{}\'".format(us_exg_pickle, self.FUND_DIR_PATH))
+            open(self.us_fund_file_path, 'w').close()
+            
+        # crt data.db
+        if (not os.path.isfile(self.ticker_data_db_file_path)):
+            self.logger.info("- create data \'{}\' file in \'{}\'".format(ticker_data_db_file_name, self.FUND_DIR_PATH))
+            open(self.ticker_data_db_file_path, 'w').close()
 
-
+    
     def push_fund(self, data_dicts:list[dict], file_name:str='us') -> bool:
         """ush fundamentals
 
