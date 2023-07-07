@@ -9,10 +9,12 @@ import pickle
 import logging
 import sqlite3
 import pandas as pd
+
 from delta.utils import Utils
 from delta.sql_handler import us_exg_pickle
 from delta.sql_handler import ticker_data_table_name
 from delta.sql_handler import ticker_data_db_file_name
+from delta.sql_handler import hist_mktcap_table_name
 
 ticker_data_keys = {
     'code',
@@ -24,6 +26,32 @@ ticker_data_keys = {
     'ipo_date',
     'mkt_cap',
 }
+
+
+class MarketCapHandler:
+    # update market cap to 'tkl_data' table
+    # push/pull market cap to '{ticker}_hist_mktcap' tables
+    # crt ticker historical market cap table
+    
+    def __init__(self, logger:logging.Logger, data_con:sqlite3.Connection, data_cur:sqlite3.Cursor):
+        self.logger = logger
+        self.data_con = data_con
+        self.data_cur = data_cur
+
+    def crt_ticker_hist_mktcap_table(self, ticker:str):
+        table_name = hist_mktcap_table_name.format(ticker)
+        ...
+    
+    def pull_hist_mktcap(self, ticker:str, keys:list[str]=None) -> bool:
+        table_name = hist_mktcap_table_name.format(ticker)
+        ...
+        
+    def push_hist_mktcap(self, ticker:str, df:pd.DataFrame) -> bool:
+        table_name = hist_mktcap_table_name.format(ticker)
+        ...
+    
+    def update_mktcap_2_tkldata(self) -> bool:
+        ...
 
 class DataDB:
     

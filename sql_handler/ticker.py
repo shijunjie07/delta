@@ -14,7 +14,7 @@ from delta.sql_handler.nodata import NoDataDB
 
 class GetData:
     
-    def __init__(self, logger:logging.Logger, DB_PATH:str, db_con, db_cur):
+    def __init__(self, logger:logging.Logger, DB_PATH:str, db_con:sqlite3.Connection, db_cur:sqlite3.Cursor):
         self.logger = logger
         self.DB_PATH = DB_PATH
         self.con = db_con
@@ -81,7 +81,7 @@ class LoadData(NoDataDB):
     # 3. 
     # 4. 
     
-    def __init__(self, logger:logging.Logger, DB_PATH:str, db_con, db_cur):
+    def __init__(self, logger:logging.Logger, DB_PATH:str, db_con:sqlite3.Connection, db_cur:sqlite3.Cursor):
         self.logger = logger
         self.DB_PATH = DB_PATH
         self.con = db_con

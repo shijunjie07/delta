@@ -17,6 +17,7 @@ fund_dir_name = 'fund/'
 us_exg_pickle = 'us.pickle'
 ticker_data_table_name = 'tkl_data'
 ticker_data_db_file_name = 'data.db'
+hist_mktcap_table_name = '{}_hist_mktcap'
 
 
 class DBHandler(TickerDB, NoDataDB, FundDB):
