@@ -352,6 +352,8 @@ class Utils:
                 'Currency': 'currency',
                 'Type': 'type',
                 'IPODate': 'ipo_date',
+                'value': 'mkt_cap_value',
+                'mkt_cap': 'mkt_cap',
             }
             exclude_cols = []
         else:

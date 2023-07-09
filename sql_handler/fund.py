@@ -13,10 +13,10 @@ import pandas as pd
 from delta.utils import Utils
 from delta.sql_handler import us_exg_pickle
 from delta.sql_handler import ticker_data_table_name
-from delta.sql_handler import ticker_data_db_file_name
+from delta.sql_handler import stock_info_db_file_name
 from delta.sql_handler import hist_mktcap_table_name
 
-ticker_data_keys = {
+ticker_data_keys = [
     'code',
     'name',
     'country',
@@ -24,9 +24,18 @@ ticker_data_keys = {
     'currency',
     'type',
     'ipo_date',
+    'mkt_cap_value',
     'mkt_cap',
-}
+]
 
+market_cap_ctgs = {
+    "NANO": 0,
+    "MICRO": 50_000_000,
+    "SMALL": 300_000_000,
+    "MEDIUM": 2_000_000_000,
+    "LARGE": 10_000_000_000,
+    "MEGA": 200_000_000_000,
+}
 
 class MarketCapHandler:
     # update market cap to 'tkl_data' table
@@ -37,15 +46,23 @@ class MarketCapHandler:
         self.logger = logger
         self.data_con = data_con
         self.data_cur = data_cur
-
+    
     def crt_ticker_hist_mktcap_table(self, ticker:str):
         table_name = hist_mktcap_table_name.format(ticker)
-        ...
-    
-    def pull_hist_mktcap(self, ticker:str, keys:list[str]=None) -> bool:
-        table_name = hist_mktcap_table_name.format(ticker)
-        ...
         
+    
+    def pull_hist_mktcap(self, ticker:str, keys:list[str]=None) -> tuple[bool, dict]:
+        table_name = hist_mktcap_table_name.format(ticker)
+        self.logger.info("create \'{}\' tables on \'{}\'".format(table_name, stock_info_db_file_name))
+        try:
+            crt_table_query = "CREATE TABLE IF NOT EXISTS {}(date_day DATETIME UNIQUE, mkt_cap_value BIGINT, mkt_cap TEXT);".format(table_name)
+            self.data_cur.execute(crt_table_query)
+            self.data_con.commit()
+        except Exception as e:
+            self.logger.info("- An exception occured while creating \'{}\' table: \'{}\', continue...".format(table_name, e))
+
+        self.logger.info("- created \'{}\' table".format(table_name))    
+    
     def push_hist_mktcap(self, ticker:str, df:pd.DataFrame) -> bool:
         table_name = hist_mktcap_table_name.format(ticker)
         ...
@@ -53,30 +70,89 @@ class MarketCapHandler:
     def update_mktcap_2_tkldata(self) -> bool:
         ...
 
-class DataDB:
+    def _cat_mktcap(value:int) -> str:
+        """catagorise market cap
+
+        Args:
+            value (int): market cap values
+
+        Raises:
+            ValueError: _description_
+
+        Returns:
+            str: market cap
+        """
+
+        # check valid value
+        positive_inf = float("inf")
+        if not ((value >= 0) and (value < positive_inf)):
+            raise ValueError("\'value\' should be a positive number, not \'{}\'".format(value))
+        
+        # find market cap
+        for i in range(len(market_cap_ctgs.keys())):
+            # determine threshold values
+            lower_threshold_val = market_cap_ctgs[list(market_cap_ctgs.keys())[i]]
+
+            # last one
+            if (i == (len(market_cap_ctgs.keys())-1)):
+                upper_threshold_val = positive_inf
+            else:
+                upper_threshold_val = market_cap_ctgs[list(market_cap_ctgs.keys())[i+1]]
+
+            if ((value >= lower_threshold_val) and (value < upper_threshold_val)):
+                return list(market_cap_ctgs.keys())[i]
+
+
+class DataDB(MarketCapHandler):
     
     def __init__(self, logger:logging.Logger, db_path:str):
         self.logger = logger
         self.ticker_data_db_file_path = db_path
         # sql connection
-        self.logger.info(":: establish connection with data.db ::")
+        self.logger.info(":: establish connection with stock_info.db ::")
         self.data_con = sqlite3.connect(self.ticker_data_db_file_path)
         self.data_cur = self.data_con.cursor()
         
-        # Utils().__init__(self, self.logger)
+        MarketCapHandler.__init__(self, self.logger, self.data_con, self.data_cur)
+    
+    def is_data_table_exists(self, table_name:str=ticker_data_table_name) -> bool:
+        """check if the input table name exists in data.db
+           if checking historical market cap table use:
+           >>> table_name=hist_mktcap_table_name.format(ticker)
+           else it will check ticker_data_table_name
+
+        Args:
+            table_name (str, optional): table name. Defaults to ticker_data_table_name.
+
+        Returns:
+            bool: is table exists
+        """
+
+        self.logger.info("check data.db table exist")
+        logging_info = '- \'{}\' table exist: '.format(table_name)
         
+        is_exist = False
+        if (table_name in self._data_table_names()):
+            is_exist = True
+
+        logging_info = logging_info + str(is_exist)
+        self.logger.info(logging_info)
+        
+        # return
+        return is_exist
+    
     def crt_ticker_data_table(self, table_name:str=ticker_data_table_name):
         """create ticker data table
         """
-        self.logger.info("create \'{}\' tables on \'{}\'".format(table_name, ticker_data_db_file_name))
+        self.logger.info("create \'{}\' tables on \'{}\'".format(table_name, stock_info_db_file_name))
         try:
             crt_table_query = "CREATE TABLE IF NOT EXISTS {}(\
                     code TEXT UNIQUE, name TEXT, country TEXT, exchange TEXT,\
-                    currency TEXT, type TEXT, ipo_date TEXT, mkt_cap TEXT);".format(table_name)
+                    currency TEXT, type TEXT, ipo_date TEXT, mkt_cap_value BIGINT, mkt_cap TEXT);".format(table_name)
             self.data_cur.execute(crt_table_query)
             self.data_con.commit()
         except Exception as e:
-            self.logger.info("- An exception occured while creating \'{}\' table: \'{}\', continue,,,".format(table_name, e))
+            self.logger.info("- An exception occured while creating \'{}\' table: \'{}\', continue...".format(table_name, e))
 
         self.logger.info("- created \'{}\' table".format(table_name))
 
@@ -107,7 +183,7 @@ class DataDB:
         TSLA     MEGA
        
         """
-        self.logger.info("pull {} ticker data from \'{}\', table: \'{}\'".format(len(tickers), ticker_data_db_file_name, table_name))
+        self.logger.info("pull {} ticker data from \'{}\', table: \'{}\'".format(len(tickers), stock_info_db_file_name, table_name))
         try:
             if (keys):
                 invalid_keys = [elem for elem in keys if elem not in ticker_data_keys]
@@ -147,7 +223,7 @@ class DataDB:
         Returns:
             bool: _description_
         """
-        self.logger.info('prepare for ticker data push on \'{}\', table: \'{}\''.format(ticker_data_db_file_name, table_name))
+        self.logger.info('prepare for ticker data push on \'{}\', table: \'{}\''.format(stock_info_db_file_name, table_name))
         # format column name
         is_success_format, df = Utils._format_column_names(df, 'tkl_data')
         if (not is_success_format):
@@ -159,12 +235,16 @@ class DataDB:
             df.to_sql('tkl_data', self.data_con, if_exists='replace', index=False)
             self.data_con.commit()
             self.logger.info('success push {} ticker data on \'{}\', table: \'{}\''.format(
-                len(df['code']), ticker_data_db_file_name, ticker_data_table_name
+                len(df['code']), stock_info_db_file_name, ticker_data_table_name
             ))
             return True
         except Exception as e:
             self.logger.info('- {}'.format(e))
             return False
+        
+    def _data_table_names() -> list[str]:
+        ...
+
 
 class FundDB(DataDB):
 
@@ -172,7 +252,7 @@ class FundDB(DataDB):
         self.logger = logger
         self.FUND_DIR_PATH = FUND_DIR_PATH  # dir
         self.us_fund_file_path = '{}{}'.format(self.FUND_DIR_PATH, us_exg_pickle)
-        self.ticker_data_db_file_path = '{}{}'.format(self.FUND_DIR_PATH, ticker_data_db_file_name)
+        self.ticker_data_db_file_path = '{}{}'.format(self.FUND_DIR_PATH, stock_info_db_file_name)
         
         # init fund files
         self._init_fund_files()
@@ -197,7 +277,7 @@ class FundDB(DataDB):
             
         # crt data.db
         if (not os.path.isfile(self.ticker_data_db_file_path)):
-            self.logger.info("- create data \'{}\' file in \'{}\'".format(ticker_data_db_file_name, self.FUND_DIR_PATH))
+            self.logger.info("- create data \'{}\' file in \'{}\'".format(stock_info_db_file_name, self.FUND_DIR_PATH))
             open(self.ticker_data_db_file_path, 'w').close()
 
     

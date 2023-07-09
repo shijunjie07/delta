@@ -14,9 +14,9 @@ from delta.sql_handler.nodata import NoDataDB
 
 class GetData:
     
-    def __init__(self, logger:logging.Logger, DB_PATH:str, db_con:sqlite3.Connection, db_cur:sqlite3.Cursor):
+    def __init__(self, logger:logging.Logger, STOCK_PRICE_DB_PATH:str, db_con:sqlite3.Connection, db_cur:sqlite3.Cursor):
         self.logger = logger
-        self.DB_PATH = DB_PATH
+        self.STOCK_PRICE_DB_PATH = STOCK_PRICE_DB_PATH
         self.con = db_con
         self.cur = db_cur
         
@@ -81,9 +81,9 @@ class LoadData(NoDataDB):
     # 3. 
     # 4. 
     
-    def __init__(self, logger:logging.Logger, DB_PATH:str, db_con:sqlite3.Connection, db_cur:sqlite3.Cursor):
+    def __init__(self, logger:logging.Logger, STOCK_PRICE_DB_PATH:str, db_con:sqlite3.Connection, db_cur:sqlite3.Cursor):
         self.logger = logger
-        self.DB_PATH = DB_PATH
+        self.STOCK_PRICE_DB_PATH = STOCK_PRICE_DB_PATH
         self.con = db_con
         self.cur = db_cur
         # # init NoDataDB
@@ -189,20 +189,19 @@ class LoadData(NoDataDB):
 
         return is_success_rm
 
-class TickerDB(GetData, LoadData):
+class StockPriceDB(GetData, LoadData):
     
-    def __init__(self, logger:logging.Logger, DB_PATH:str):
+    def __init__(self, logger:logging.Logger, STOCK_PRICE_DB_PATH:str):
         self.logger = logger
-        self.DB_PATH = DB_PATH
-        self.logger.info(":: establish connection wtih findata.db ::")
-        self.con = sqlite3.connect(self.DB_PATH, check_same_thread=False)
+        self.STOCK_PRICE_DB_PATH = STOCK_PRICE_DB_PATH
+        self.logger.info(":: establish connection wtih stock_price.db ::")
+        self.con = sqlite3.connect(self.STOCK_PRICE_DB_PATH, check_same_thread=False)
         self.cur = self.con.cursor()
         
-        self.exist_ticker_table_names = self._ticker_table_names()
         self.table_types = ['eod', 'intra']
         
-        GetData.__init__(self, self.logger, self.DB_PATH, self.con, self.cur)
-        LoadData.__init__(self, self.logger, self.DB_PATH, self.con, self.cur)
+        GetData.__init__(self, self.logger, self.STOCK_PRICE_DB_PATH, self.con, self.cur)
+        LoadData.__init__(self, self.logger, self.STOCK_PRICE_DB_PATH, self.con, self.cur)
         
         
     def is_tkl_tables_exist(self, ticker:str) -> tuple[bool, list[str]]:
@@ -215,14 +214,12 @@ class TickerDB(GetData, LoadData):
             tuple[bool, list[str]]: _description_
         """
         self.logger.info("check ticker table exist")
-        self.logger.info("- update \'exist_ticker_table_names\'")
-        self.exist_ticker_table_names = self._ticker_table_names()
 
         logging_info = '- check if {} tables exist: '.format(ticker)
         crt_tables = []
         for table_type in self.table_types:
             table_name = '_'.join([ticker, table_type])
-            if (table_name in self.exist_ticker_table_names):
+            if (table_name in self._ticker_table_names()):
                 continue
             else:
                 # append for later action: create table

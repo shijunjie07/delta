@@ -4,29 +4,33 @@
 # Fri 15 Jun 2023
 # -----------------------
 
+stock_price_db_file_name = 'stock_price.db'             # stock price db name
+nodata_db_file_name = 'nodata.db'           # nodata db name
+stock_info_db_file_name = 'stock_info.db'   # stock info db name
+us_exg_pickle = 'us.pickle'                 # file to store fundamentals
+fund_dir_name = 'fund/'                     # path to store fundamentals
+
+# table names of stock_info.db
+ticker_data_table_name = 'tkl_data'         # snapshot of ticker info
+hist_mktcap_table_name = '{}_hist_mktcap'   # historical market capitalisation of a ticker
+
+# imports
+import os
+import logging
+
+# local imports
 from delta.sql_handler.fund import FundDB
 from delta.sql_handler.nodata import NoDataDB
-from delta.sql_handler.ticker import TickerDB
-import logging
-import os
-
-db_file_name = 'findata.db'
-nodata_db_file_name = 'nodata.db'
-fund_dir_name = 'fund/'
-
-us_exg_pickle = 'us.pickle'
-ticker_data_table_name = 'tkl_data'
-ticker_data_db_file_name = 'data.db'
-hist_mktcap_table_name = '{}_hist_mktcap'
+from sql_handler.stock_price import StockPriceDB
 
 
-class DBHandler(TickerDB, NoDataDB, FundDB):
+class DBHandler(StockPriceDB, NoDataDB, FundDB):
     
     def __init__(self, logger:logging.Logger, data_dir_path:str):
         
         self.logger = logger
         self.DATA_DIR_PATH = data_dir_path
-        self.DB_PATH = '{}{}'.format(self.DATA_DIR_PATH, db_file_name)
+        self.STOCK_PRICE_DB_PATH = '{}{}'.format(self.DATA_DIR_PATH, stock_price_db_file_name)
         self.NO_DATA_DB_PATH = '{}{}'.format(self.DATA_DIR_PATH, nodata_db_file_name)
         self.FUND_DIR_PATH = '{}{}'.format(self.DATA_DIR_PATH, fund_dir_name)
         
@@ -35,7 +39,7 @@ class DBHandler(TickerDB, NoDataDB, FundDB):
         
         # init
         NoDataDB.__init__(self, self.logger, self.NO_DATA_DB_PATH)
-        TickerDB.__init__(self, self.logger, self.DB_PATH)
+        StockPriceDB.__init__(self, self.logger, self.STOCK_PRICE_DB_PATH)
         FundDB.__init__(self, self.logger, self.FUND_DIR_PATH)
 
     def close_all_conn(self):
@@ -58,9 +62,9 @@ class DBHandler(TickerDB, NoDataDB, FundDB):
             os.mkdir(self.DATA_DIR_PATH)
         
         # create findata.db
-        if (not os.path.isfile(self.DB_PATH)):
-            self.logger.info("- create \'{}\' file in \'{}\'".format(db_file_name, self.DATA_DIR_PATH))
-            open(self.DB_PATH, 'w').close()
+        if (not os.path.isfile(self.STOCK_PRICE_DB_PATH)):
+            self.logger.info("- create \'{}\' file in \'{}\'".format(stock_price_db_file_name, self.DATA_DIR_PATH))
+            open(self.STOCK_PRICE_DB_PATH, 'w').close()
         
         # create nodata.db
         if (not os.path.isfile(self.NO_DATA_DB_PATH)):

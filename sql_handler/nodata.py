@@ -16,7 +16,7 @@ class NoDataDB:
         self.logger.info(":: establish connection with nodata.db ::")
         self.nodata_con = sqlite3.connect(self.NO_DATA_DB_PATH, check_same_thread=False)
         self.nodata_cur = self.nodata_con.cursor()
-        self.exist_nodata_table_names = self._nodata_table_names()
+
         self.nodata_table_types = ['eod', 'intra']
 
 
@@ -40,12 +40,10 @@ class NoDataDB:
         """
         self.logger.info("check nodata tables exist")
         logging_info = '- nodata tables exist: '.format(ticker)
-        self.logger.info("- update \'exist_nodata_table_names\'")
-        self.exist_nodata_table_names = self._nodata_table_names()
         crt_tables = []
         for table_type in self.nodata_table_types:
             table_name = '_'.join([ticker, table_type])
-            if (table_name in self.exist_nodata_table_names):
+            if (table_name in self._nodata_table_names()):
                 continue
             else:
                 # append for later action: create table
@@ -163,11 +161,10 @@ class NoDataDB:
             tuple[list]: dates, timestamps
         """
         self.logger.info("- pull nodata dts")
-        self.logger.info("- update \'exist_nodata_table_names\'")
-        self.exist_nodata_table_names = self._nodata_table_names()
+        exist_nodata_table_names = self._nodata_table_names()
         if (
-            ('{}_eod'.format(ticker) in self.exist_nodata_table_names)
-            and ('{}_intra'.format(ticker) in self.exist_nodata_table_names)
+            ('{}_eod'.format(ticker) in exist_nodata_table_names)
+            and ('{}_intra'.format(ticker) in exist_nodata_table_names)
         ):
             date_rows = self.nodata_cur.execute("SELECT date_day FROM {}_eod".format(ticker))
             date_rows = self.nodata_cur.fetchall()
