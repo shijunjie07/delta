@@ -44,10 +44,10 @@ class GetData:
         dt_obj_index = 0
         
         # queries
-        eod_query = 'SELECT date_day FROM {}_eod WHERE date_day>={} AND date_day<={};'.format(
+        eod_query = 'SELECT trade_date FROM {}_eod WHERE trade_date>={} AND trade_date<={};'.format(
             ticker, start_date, end_date
         )
-        intra_query = 'SELECT date_time FROM {}_intra WHERE date_time>={} AND date_time<={};'.format(
+        intra_query = 'SELECT trade_timestamp FROM {}_intra WHERE trade_timestamp>={} AND trade_timestamp<={};'.format(
             ticker, start_ts, end_ts
         )
         
@@ -70,6 +70,12 @@ class GetData:
         self.logger.info('- existing dts: {}(date) {}(tss)'.format(len(dates), len(timestamps)))
 
         return dates, timestamps
+
+    def pull_eod():
+        ...
+    
+    def pull_intra():
+        ...
 
 class LoadData(NoDataDB):
     # TODO:
@@ -112,7 +118,7 @@ class LoadData(NoDataDB):
             df.to_sql('{}_eod'.format(ticker), self.con, if_exists='replace', index=False)
             
             # check nodata timestamps
-            is_success_rm = self._rm_nodata_dts(ticker, df['date_day'], [])
+            is_success_rm = self._rm_nodata_dts(ticker, df['trade_date'], [])
             if (not is_success_rm):
                 self.logger.info('error occurred while preparing to push eod'.format(ticker))
                 self.logger.info('- exception on \'_rm_nodata_dts\'')
@@ -153,7 +159,7 @@ class LoadData(NoDataDB):
             df.to_sql('{}_intra'.format(ticker), self.con, if_exists='replace', index=False)
             
             # check nodata timestamps
-            is_success_rm = self._rm_nodata_dts(ticker, [], df['date_time'])
+            is_success_rm = self._rm_nodata_dts(ticker, [], df['trade_datetime'])
             if (not is_success_rm):
                 self.logger.info('error occurred while preparing to push intra'.format(ticker))
                 self.logger.info('- exception on \'_rm_nodata_dts\'')
@@ -266,12 +272,14 @@ class StockPriceDB(GetData, LoadData):
             self.cur.execute(
                 ("CREATE TABLE IF NOT EXISTS "
                  "{}_intra("
-                 "trade_datetime DATETIME UNIQUE, "
+                 "trade_timestamp TIMESTAMP UNIQUE, "
                  "open FLOAT, "
                  "high FLOAT, "
                  "low FLOAT, "
                  "close FLOAT, "
-                 "volume BIGINT);").format(ticker)
+                 "volume BIGINT, "
+                 "gmtoffset INT, "
+                 "trade_datetime DATETIME);").format(ticker)
             )
             self.con.commit()
             is_crt = True

@@ -14,6 +14,7 @@ fund_dir_name = 'fund/'                         # path to store fundamentals
 ticker_data_table_name = 'tkl_data'             # snapshot of ticker info
 hist_mktcap_table_name = '{}_hist_mktcap'       # historical market capitalisation of a ticker
 
+
 # imports
 import os
 import logging
