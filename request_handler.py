@@ -20,7 +20,7 @@ class EodApiRequestHandler:
         """
         self.logger = logger
         self.api_key = api_key
-        self.logger.info(":: establish connection with EODHISTRICALDATA.com ::")
+        self.logger.info(":: init EOD API connection ::")
         self.api_client = EodHistoricalData(self.api_key)
         
         # api calls per request

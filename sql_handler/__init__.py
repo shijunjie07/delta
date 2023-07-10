@@ -4,15 +4,15 @@
 # Fri 15 Jun 2023
 # -----------------------
 
-stock_price_db_file_name = 'stock_price.db'             # stock price db name
-nodata_db_file_name = 'nodata.db'           # nodata db name
-stock_info_db_file_name = 'stock_info.db'   # stock info db name
-us_exg_pickle = 'us.pickle'                 # file to store fundamentals
-fund_dir_name = 'fund/'                     # path to store fundamentals
+stock_price_db_file_name = 'stock_price.db'     # stock price db name
+nodata_db_file_name = 'nodata.db'               # nodata db name
+stock_info_db_file_name = 'stock_info.db'       # stock info db name
+us_exg_pickle = 'us.pickle'                     # file to store fundamentals
+fund_dir_name = 'fund/'                         # path to store fundamentals
 
 # table names of stock_info.db
-ticker_data_table_name = 'tkl_data'         # snapshot of ticker info
-hist_mktcap_table_name = '{}_hist_mktcap'   # historical market capitalisation of a ticker
+ticker_data_table_name = 'tkl_data'             # snapshot of ticker info
+hist_mktcap_table_name = '{}_hist_mktcap'       # historical market capitalisation of a ticker
 
 # imports
 import os
