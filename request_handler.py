@@ -11,7 +11,7 @@ from urllib3.exceptions import HTTPError
 
 class EodApiRequestHandler:
     
-    def __init__(self, logger:logging.Logger, api_key:str, call_limit=100000):
+    def __init__(self, logger:logging.Logger, api_key:str, call_limit=100_000):
         """_summary_
 
         Args:
@@ -144,9 +144,8 @@ class EodApiRequestHandler:
                 self.logger.info("- empty return")
                 return False, {'empty return': ''}
             self.logger.info("- request success")
-            self.logger.info("- parsing exchange symbols to dict")
+            self.logger.info("- parse exchange symbols to dict")
             exg_symbols = pd.DataFrame(exg_symbols).to_dict("list")
-            self.logger.info("- parse done")
             return True, exg_symbols
         except:
             self.logger.info("- \'HTTP exception raised\'")
@@ -159,4 +158,4 @@ class EodApiRequestHandler:
         Returns:
             int: _description_
         """
-        return 10000
+        return int(self.api_client.get_user()['apiRequests'])

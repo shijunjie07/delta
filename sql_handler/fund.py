@@ -55,7 +55,7 @@ class MarketCapHandler:
         table_name = hist_mktcap_table_name.format(ticker)
         self.logger.info("create \'{}\' tables on \'{}\'".format(table_name, stock_info_db_file_name))
         try:
-            crt_table_query = "CREATE TABLE IF NOT EXISTS {}(date_day DATETIME UNIQUE, mkt_cap_value BIGINT, mkt_cap TEXT);".format(table_name)
+            crt_table_query = "CREATE TABLE IF NOT EXISTS {}(trade_date DATETIME UNIQUE, mkt_cap_value BIGINT, mkt_cap TEXT);".format(table_name)
             self.data_cur.execute(crt_table_query)
             self.data_con.commit()
         except Exception as e:

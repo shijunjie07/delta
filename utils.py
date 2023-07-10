@@ -322,26 +322,28 @@ class Utils:
         if (table_type == 'eod'):
             # Mapping of original eod column names to formatted column names
             columns = {
-                'date': 'date_day',
-                'open': 'd_open',
-                'high': 'd_high',
-                'low': 'd_low',
-                'close': 'd_close',
-                'volume': 'd_volume',
-                'adjusted_close': 'd_adj_close',
+                'date': 'trade_date',
+                'open': 'open',
+                'high': 'high',
+                'low': 'low',
+                'close': 'close',
+                'volume': 'volume',
+                'adjusted_close': 'adj_close',
             }
             exclude_cols = []
         elif (table_type == 'intra'):
             # Mapping of original intra column names to formatted column names
             columns = {
-                'timestamp': 'date_time',
-                'open': 'm_open',
-                'high': 'm_high',
-                'low': 'm_low',
-                'close': 'm_close',
-                'volume': 'm_volume',
+                'timestamp': 'trade_timestamp',
+                'open': 'open',
+                'high': 'high',
+                'low': 'low',
+                'close': 'close',
+                'volume': 'volume',
+                'gmtoffset': 'gmtoffset',
+                'datetime': 'trade_datetime',
             }
-            exclude_cols = ['gmtoffset', 'datetime']
+            exclude_cols = []
         elif (table_type == 'tkl_data'):
             # Mapping of original intra column names to formatted column names
             columns = {
@@ -361,7 +363,8 @@ class Utils:
             return False, formatted_df
         
         # filter out un-want columns
-        df = df.drop(columns=exclude_cols, axis=1)
+        if exclude_cols:
+            df = df.drop(columns=exclude_cols, axis=1)
         
         # Check if the keys of columns match the column names of the DataFrame
         if set(columns.keys()) != set(df.columns):

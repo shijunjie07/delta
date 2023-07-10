@@ -248,12 +248,31 @@ class StockPriceDB(GetData, LoadData):
         is_crt = False
         if ('eod' in table_types):
             #create eod
-            self.cur.execute(f"CREATE TABLE IF NOT EXISTS {ticker}_eod(date_day DATE UNIQUE, d_open FLOAT, d_high FLOAT, d_low FLOAT, d_close FLOAT, d_volume BIGINT, d_adj_close FLOAT);")
+            self.cur.execute(
+                ("CREATE TABLE IF NOT EXISTS "
+                 "{}_eod("
+                 "trade_date DATE UNIQUE, "
+                 "open FLOAT, "
+                 "high FLOAT, "
+                 "low FLOAT, "
+                 "close FLOAT, "
+                 "volume BIGINT, "
+                 "adj_close FLOAT);").format(ticker)
+            )
             self.con.commit()
             is_crt = True
         if ('intra' in table_types):
             #create intra
-            self.cur.execute(f"CREATE TABLE IF NOT EXISTS {ticker}_intra(date_time DATETIME UNIQUE, m_open FLOAT, m_high FLOAT, m_low FLOAT, m_close FLOAT, m_volume BIGINT);")
+            self.cur.execute(
+                ("CREATE TABLE IF NOT EXISTS "
+                 "{}_intra("
+                 "trade_datetime DATETIME UNIQUE, "
+                 "open FLOAT, "
+                 "high FLOAT, "
+                 "low FLOAT, "
+                 "close FLOAT, "
+                 "volume BIGINT);").format(ticker)
+            )
             self.con.commit()
             is_crt = True
 
