@@ -253,14 +253,14 @@ class DataDB(HistMarketCapHandler):
         """
         self.logger.info('prepare for ticker data push on \'{}\', table: \'{}\''.format(stock_info_db_file_name, table_name))
         # format column name
-        is_success_format, df = Utils._format_column_names(df, 'tkl_data')
+        is_success_format, df = Utils._format_column_names(df, table_name)
         if (not is_success_format):
             self.logger.info('- fail to format dataframe')
             return False
         
         # push data
         try:
-            df.to_sql('tkl_data', self.data_con, if_exists='replace', index=False)
+            df.to_sql(table_name, self.data_con, if_exists='replace', index=False)
             self.data_con.commit()
             self.logger.info('success push {} ticker data on \'{}\', table: \'{}\''.format(
                 len(df['code']), stock_info_db_file_name, ticker_data_table_name
@@ -309,17 +309,17 @@ class FundDB(DataDB):
             open(self.ticker_data_db_file_path, 'w').close()
 
     
-    def push_fund(self, data_dicts:list[dict], file_name:str='us') -> bool:
+    def push_fund(self, data_dicts:list[dict], file_name:str=us_exg_pickle) -> bool:
         """ush fundamentals
 
         Args:
             data_dicts (list[dict]): _description_
-            file_name (str, optional): _description_. Defaults to 'us'.
+            file_name (str, optional): _description_. Defaults to us_exg_pickle.
 
         Returns:
             bool: _description_
         """
-        file_path = '{}{}.pickle'.format(self.FUND_DIR_PATH, file_name)
+        file_path = '{}{}'.format(self.FUND_DIR_PATH, file_name)
         self.logger.info("push fundamentals to \'{}\'".format(file_path))
 
         # check valid file path
@@ -344,18 +344,18 @@ class FundDB(DataDB):
         self.logger.info("- success push {} dicts".format(len(unique_data_dicts)))
         return True
 
-    def pull_fund(self, tickers:list[str], file_name:str='us', all:bool=False) -> tuple[bool, list[dict]]:
+    def pull_fund(self, tickers:list[str], file_name:str=us_exg_pickle, all:bool=False) -> tuple[bool, list[dict]]:
         """pull fundamentals
 
         Args:
             tickers (list[str]): _description_
-            file_name (str, optional): _description_. Defaults to 'us'.
+            file_name (str, optional): _description_. Defaults to us_exg_pickle.
             all (bool, optional): _description_. Defaults to False.
 
         Returns:
             tuple[bool, list[dict]]: list of ticker fundamentals dict
         """
-        file_path = '{}{}.pickle'.format(self.FUND_DIR_PATH, file_name)
+        file_path = '{}{}'.format(self.FUND_DIR_PATH, file_name)
         self.logger.info("pull fundamentals from \'{}\'".format(file_path))
         
         # check valid file path
@@ -391,17 +391,17 @@ class FundDB(DataDB):
             
             return True, data_dicts
 
-    def pull_ipo_dates_from_fud(self, tickers:list[str], file_name:str='us') -> tuple[bool, dict[str, str]]:
+    def pull_ipo_dates_from_fud(self, tickers:list[str], file_name:str=us_exg_pickle) -> tuple[bool, dict[str, str]]:
         """pull ipo dates from fundamentals
 
         Args:
             tickers (list[str]): _description_
-            file_name (str, optional): _description_. Defaults to 'us'.
+            file_name (str, optional): _description_. Defaults to us_exg_pickle.
 
         Returns:
             tuple[bool, dict[str, str]]: _description_
         """
-        file_path = '{}{}.pickle'.format(self.FUND_DIR_PATH, file_name)
+        file_path = '{}{}'.format(self.FUND_DIR_PATH, file_name)
         self.logger.info("pull ipo dates from \'{}\'".format(file_path))
         
         # check valid file path

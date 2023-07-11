@@ -150,7 +150,18 @@ class EodApiRequestHandler:
         except:
             self.logger.info("- \'HTTP exception raised\'")
             return False, {'HTTP exception raised': ''}
-        
+
+    def request_ticker_data(self, ticker:str) -> tuple[bool, dict]:
+        """_summary_
+
+        Args:
+            ticker (str): _description_
+
+        Returns:
+            tuple[bool, dict]: _description_
+        """
+        ...
+
     # ?????
     def _call_counts(self) -> int:
         """request call count from eodhistoricaldata.com api
