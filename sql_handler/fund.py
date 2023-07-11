@@ -16,6 +16,7 @@ from delta.sql_handler import ticker_data_table_name
 from delta.sql_handler import stock_info_db_file_name
 from delta.sql_handler import hist_mktcap_table_name
 
+# tkl_data table column names
 ticker_data_keys = [
     'code',
     'name',
@@ -28,6 +29,7 @@ ticker_data_keys = [
     'mkt_cap',
 ]
 
+# market cap catagory
 market_cap_ctgs = {
     "NANO": 0,
     "MICRO": 50_000_000,
@@ -37,7 +39,7 @@ market_cap_ctgs = {
     "MEGA": 200_000_000_000,
 }
 
-class MarketCapHandler:
+class HistMarketCapHandler:
     # update market cap to 'tkl_data' table
     # push/pull market cap to '{ticker}_hist_mktcap' tables
     # crt ticker historical market cap table
@@ -103,7 +105,7 @@ class MarketCapHandler:
                 return list(market_cap_ctgs.keys())[i]
 
 
-class DataDB(MarketCapHandler):
+class DataDB(HistMarketCapHandler):
     
     def __init__(self, logger:logging.Logger, db_path:str):
         self.logger = logger
@@ -113,7 +115,7 @@ class DataDB(MarketCapHandler):
         self.data_con = sqlite3.connect(self.ticker_data_db_file_path)
         self.data_cur = self.data_con.cursor()
         
-        MarketCapHandler.__init__(self, self.logger, self.data_con, self.data_cur)
+        HistMarketCapHandler.__init__(self, self.logger, self.data_con, self.data_cur)
     
     def is_data_table_exists(self, table_name:str=ticker_data_table_name) -> bool:
         """check if the input table name exists in data.db
@@ -213,6 +215,32 @@ class DataDB(MarketCapHandler):
         except Exception as e:
             self.logger.info("- {}".format(e))
             return False, {'exception': e}
+
+    def pull_tickers(self, table_name:str=ticker_data_table_name, mkt_cap:list=None) -> list[str]:
+        """get tickers by market caps
+
+        Args:
+            table_name (str, optional): _description_. Defaults to ticker_data_table_name.
+            mkt_cap (list, optional): market cap catagory. Defaults to None.
+
+        Returns:
+            _type_: list[str]
+        """
+        self.logger.info("pull tickers by market caps: {}".format(mkt_cap))
+        
+        data_query = "SELECT * FROM {}".format(table_name)
+        raw = self.data_cur.execute(data_query)
+        data = raw.fetchall()
+        self.logger.info("- pull \'{}\' success".format(table_name))
+        
+        self.logger.info("- format df")
+        columns = [desc[0] for desc in self.data_cur.description]
+        df = pd.DataFrame(data, columns=columns)
+
+        if (mkt_cap):
+            df = df[df['mkt_cap'].isin(mkt_cap)]
+
+        return df['code'].to_list()
 
     def push_ticker_data(self, df:pd.DataFrame, table_name:str=ticker_data_table_name) -> bool:
         """push ticker data
@@ -387,14 +415,14 @@ class FundDB(DataDB):
             loaded_data = pickle.load(pickle_file)
             self.logger.info("- pulled {} data from file".format(len(loaded_data)))
 
-        ipo_data = {}
+        ipo_date = {}
         append_tickers = []
         # pull ticker dicts
         for data in loaded_data:
             tkl = data['General']['Code']
             if tkl in tickers:
                 append_tickers.append(tkl)
-                ipo_data['%s' % tkl] = str(data['General']['IPODate'])
+                ipo_date['%s' % tkl] = str(data['General']['IPODate'])
             else:
                 continue
         not_found_tickers = list(set(tickers) - set(append_tickers))
@@ -403,4 +431,4 @@ class FundDB(DataDB):
             len(append_tickers)), len(tickers), len(not_found_tickers)
         )
             
-        return True, ipo_data
+        return True, ipo_date

@@ -31,7 +31,6 @@ class DBUpdater(
     """ 
     def __init__(
         self, activate_logger:bool=True,
-        tickers:list[str]=None,
     ):
         """init DatabaseUpdate
 
@@ -51,18 +50,14 @@ class DBUpdater(
         self.LOG_PATH = os.environ['LOG_PATH']              # log path
         
         self.market_caps = [        # market caps to pull tickers
-            'nano',
-            'micro',
-            'small',
-            'medium',
-            'large',
-            'mega',
+            'NANO',
+            'MICRO',
+            'SMALL',
+            'MEDIUM',
+            'LARGE',
+            'MEGA',
         ]
         
-        if self.tickers:
-            self.tickers = tickers
-        else:
-            self.tickers = self.get_mrkcap_tkls(self.TICKER_PATH, self.market_caps)   # tickers to update
 
         # init classes
         Utils.__init__(self, logger)
@@ -75,14 +70,23 @@ class DBUpdater(
         self.max_days = 118     # maximum periods between ‘from’ and ‘to’ for 1 minute intra data
 
     # main func
-    def update(self, start_date:str, end_date:str):
-        """Update
+    def update(
+        self, start_date:str, end_date:str, 
+        tickers:list[str]=None, initial_update:bool=False
+    ):
+        # define tickers to update
+        if self.tickers:
+            self.tickers = tickers
+        else:
+            self.tickers = self.pull_tickers(mkt_cap=self.market_caps)   # tickers to update
 
-        Args:
-            start_date (str): "%Y-%m-%d"
-            end_date (str): "%Y-%m-%d"
-        """
-        
+        if (initial_update):
+            # download all tickers' fund file and create all tables
+            is_success = self._prep_funds(self.tickers)
+            if not (is_success):
+                self.logger.info("unable to download and prepare fundamental data")
+                exit()
+
         # construct trading dts
         trading_dates, trading_timestamps = self.all_trading_dts(start_date, end_date)
         # ipo dates
@@ -97,6 +101,7 @@ class DBUpdater(
         # init info
         init_string = """
             * init update database
+            - initial update: {}
             - start date: {}
             - end date: {}
             - trading_dates: {}
@@ -110,9 +115,9 @@ class DBUpdater(
 
             -> program starts at {} <-
             """.format(
-                    start_date, end_date, len(trading_dates), len(trading_timestamps),
-                    len(self.tickers), ', '.join(self.market_caps), self.exchange,
-                    self.DATA_DIR_PATH, self.LOG_PATH, self.API_KEY, 
+                    initial_update, start_date, end_date, len(trading_dates),
+                    len(trading_timestamps), len(self.tickers), ', '.join(self.market_caps),
+                    self.exchange, self.DATA_DIR_PATH, self.LOG_PATH, self.API_KEY, 
                     dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 )
         
@@ -127,15 +132,21 @@ class DBUpdater(
             logger.info('-------------------------------------------')
             logger.info('update {}'.format(ticker))
             
-            # check ticker table exists, if not create tables
-            is_tkl_table_exists, tkl_tables = self.is_tkl_tables_exist(ticker)
-            # if ticker table not exists, then create table 
-            if (not is_tkl_table_exists):
-                self.crt_tkl_tables(ticker, tkl_tables)        # create tables
-            # check nodata dt table exists, if not create table
-            is_nodata_table_exists, nodata_tables = self.is_nodata_table_exists(ticker)
-            if (not is_nodata_table_exists):
+            # create stock pirce and nodata tables
+            if (initial_update):
+                # create tables
+                self.crt_stock_price_tables(ticker, tkl_tables)
                 self.crt_nodata_tables(ticker, nodata_tables)
+            else:
+                # check ticker table exists, if not create tables
+                is_tkl_table_exists, tkl_tables = self.is_stock_price_tables_exist(ticker)
+                # if ticker table not exists, then create table 
+                if (not is_tkl_table_exists):
+                    self.crt_stock_price_tables(ticker, tkl_tables)        # create tables
+                # check nodata dt table exists, if not create table
+                is_nodata_table_exists, nodata_tables = self.is_nodata_table_exists(ticker)
+                if (not is_nodata_table_exists):
+                    self.crt_nodata_tables(ticker, nodata_tables)
                 
             # by this time, we will have all dt and ticker table types in place.
             # ----------------------------------------------------
@@ -159,22 +170,25 @@ class DBUpdater(
             else:
                 logger.info("- no change on start date")
                 tkl_start_date = start_date
+            
+            if (initial_update):
+                missing_trading_dates, missing_timestamps = tkl_trading_dates, tkl_trading_timestamps
+            else:
+                # pull dates & tss from db
+                exist_dates, exist_timestamps = self.pull_tkl_dts(
+                    ticker, tkl_start_date, end_date,
+                    tkl_trading_timestamps[0], tkl_trading_timestamps[-1],
+                )
 
-            # pull dates & tss from db
-            exist_dates, exist_timestamps = self.pull_tkl_dts(
-                ticker, tkl_start_date, end_date,
-                tkl_trading_timestamps[0], tkl_trading_timestamps[-1],
-            )
-
-            # pull nodata dts
-            nodata_trading_dates, nodata_timestamps = self.pull_nodata_dts(ticker)
-            exist_dates.append(nodata_trading_dates)
-            exist_timestamps.append(nodata_timestamps) 
-            # check missing
-            missing_trading_dates, missing_timestamps = self.missing_dts(
-                reference_dates=tkl_trading_dates, reference_timestamps=tkl_trading_timestamps,
-                comparant_dates=exist_dates, comparant_timestamps=exist_timestamps
-            )
+                # pull nodata dts
+                nodata_trading_dates, nodata_timestamps = self.pull_nodata_dts(ticker)
+                exist_dates.append(nodata_trading_dates)
+                exist_timestamps.append(nodata_timestamps) 
+                # check missing
+                missing_trading_dates, missing_timestamps = self.missing_dts(
+                    reference_dates=tkl_trading_dates, reference_timestamps=tkl_trading_timestamps,
+                    comparant_dates=exist_dates, comparant_timestamps=exist_timestamps
+                )
             
             if ((not missing_trading_dates) and (not missing_timestamps)):
                 logger.info('no missing dts; moving to next ticker')
@@ -282,3 +296,14 @@ class DBUpdater(
         
         # choose to save error tickers
         self._check_save_error_tkls(self.error_tkls)
+        
+    def _prep_funds(self, tickers:list[str]) -> bool:
+        """prepare fundamentals pickle and data.db
+
+        Args:
+            tickers (list[str]): _description_
+
+        Returns:
+            bool: _description_
+        """
+        ...

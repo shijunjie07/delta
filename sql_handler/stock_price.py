@@ -210,7 +210,7 @@ class StockPriceDB(GetData, LoadData):
         LoadData.__init__(self, self.logger, self.STOCK_PRICE_DB_PATH, self.con, self.cur)
         
         
-    def is_tkl_tables_exist(self, ticker:str) -> tuple[bool, list[str]]:
+    def is_stock_price_tables_exist(self, ticker:str) -> tuple[bool, list[str]]:
         """check if the input ticker exists in database
 
         Args:
@@ -219,13 +219,13 @@ class StockPriceDB(GetData, LoadData):
         Returns:
             tuple[bool, list[str]]: _description_
         """
-        self.logger.info("check ticker table exist")
+        self.logger.info("check stock price table exist")
 
         logging_info = '- check if {} tables exist: '.format(ticker)
         crt_tables = []
         for table_type in self.table_types:
             table_name = '_'.join([ticker, table_type])
-            if (table_name in self._ticker_table_names()):
+            if (table_name in self._stock_price_table_names()):
                 continue
             else:
                 # append for later action: create table
@@ -242,7 +242,7 @@ class StockPriceDB(GetData, LoadData):
         # return
         return is_exist, crt_tables
 
-    def crt_tkl_tables(self, ticker:str, table_types:list[str]):
+    def crt_stock_price_tables(self, ticker:str, table_types:list[str]):
         """create ticker tables with the input table types
 
         Args:
@@ -250,7 +250,7 @@ class StockPriceDB(GetData, LoadData):
             table_types (str): _description_
         """
         # crt tables
-        self.logger.info('create ticker tables')
+        self.logger.info('create stock price tables')
         is_crt = False
         if ('eod' in table_types):
             #create eod
@@ -290,7 +290,7 @@ class StockPriceDB(GetData, LoadData):
             logging_info = '- fail to create ticker tables with \'table_type\': {}'.format(', '.join(table_types))
         self.logger.info(logging_info)
 
-    def _ticker_table_names(self):
+    def _stock_price_table_names(self):
         """
         
         """
