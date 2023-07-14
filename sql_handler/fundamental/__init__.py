@@ -4,4 +4,5 @@
 # Thu 13 Jul 2023
 # -----------------------
 
-from delta.sql_handler.db_handler import DBHandler
+
+from delta.sql_handler.fundamental.fund import FundDB

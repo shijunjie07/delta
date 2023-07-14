@@ -127,7 +127,7 @@ class EodApiRequestHandler:
             return False, {'HTTP exception raised': ''}
 
     def request_tickers(self, exchange:str) -> tuple[bool, dict]:
-        """request exchange traded tickers
+        """request exchange traded tickers (ticker data)
 
         Args:
             exchange (str): exchange code
@@ -150,17 +150,6 @@ class EodApiRequestHandler:
         except:
             self.logger.info("- \'HTTP exception raised\'")
             return False, {'HTTP exception raised': ''}
-
-    def request_ticker_data(self, ticker:str) -> tuple[bool, dict]:
-        """_summary_
-
-        Args:
-            ticker (str): _description_
-
-        Returns:
-            tuple[bool, dict]: _description_
-        """
-        ...
 
     # ?????
     def _call_counts(self) -> int:
