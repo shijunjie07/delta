@@ -46,7 +46,8 @@ class DBUpdater(
         self.DATA_DIR_PATH = os.environ['DATA_DIR_PATH']    # directiory
         self.API_KEY = os.environ['API_KEY']                # api key
         self.LOG_PATH = os.environ['LOG_PATH']              # log path
-        
+        self.NASDAQ_CSV = '/home/junja/findata/data/market_caps/nasdaq_screener_1690263635982_mktcap.csv'   # nasdaq symbols csv file
+
         self.market_caps = [        # market caps to pull tickers
             'NANO',
             'MICRO',
@@ -73,10 +74,12 @@ class DBUpdater(
         tickers:list[str]=None
     ):
         # define tickers to update
-        if self.tickers:
+        if tickers:
             self.tickers = tickers
         else:
-            self.tickers = self.pull_tickers(mkt_cap=self.market_caps)   # tickers to update
+            self.tickers = pd.read_csv(self.NASDAQ_CSV)['Symbol'].to_list()
+        # validate ticker
+        self.tickers, invalid_tickers, tkl_log_msg = Utils.validate_tickers(self.tickers)
 
         # construct trading dts
         trading_dates, trading_timestamps = self.all_trading_dts(start_date, end_date)

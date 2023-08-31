@@ -376,4 +376,45 @@ class Utils:
             formatted_df[columns[col]] = df[col]
         
         # Return the DataFrame with the formatted column names
-        return True, formatted_df 
+        return True, formatted_df
+    
+    def validate_tickers(tickers:list) -> tuple[list[str], list, str]:
+        """validate symbol name
+
+        Args:
+            tickers (list): original tickers
+
+        Returns:
+            list[str]: valid tickers
+            list: invalid tickers
+            str: log message
+        """
+        log_msg = '{}(input), {}(unique), {}(valid)'
+        ori_tkl_len = len(tickers)
+        
+        # drop dup
+        no_dup_tkls = []
+        seen = set()
+        for item in tickers:
+            if item not in seen:
+                no_dup_tkls.append(item)
+                seen.add(item)
+        unique_tkl_len = len(no_dup_tkls)
+        
+        # drop invalid symbol name
+        # remove float type
+        no_dup_tkls = [
+            tkl for tkl in no_dup_tkls
+            if not isinstance(tkl, float)
+        ]
+        # remove invalid characters
+        no_dup_valid_tkls = [
+            tkl for tkl in no_dup_tkls
+            if (
+                (' ' not in tkl)
+                or ('/' not in tkl)
+            )
+        ]
+        valid_tkl_len = len(no_dup_valid_tkls)
+
+        return no_dup_valid_tkls, list(seen), log_msg.format(ori_tkl_len, unique_tkl_len, valid_tkl_len)
